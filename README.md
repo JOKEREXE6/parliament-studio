@@ -11,4 +11,4 @@ Free, interactive web tool for creating clean parliamentary, hemicycle, and elec
 
 ## ☕ Support the Project
 If Parliament Studio saved you time for your videos, articles, or presentations, consider supporting its development:
-- **[Support via Boosty](https://boosty.to)** (International & RU cards supported)
+- **[Support via Boosty](https://boosty.to/joker_exe6/donate)** (International & RU cards supported)
