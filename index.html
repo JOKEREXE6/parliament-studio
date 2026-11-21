@@ -1,0 +1,4112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-i18n="doc.title">Parliament Studio — конструктор диаграмм парламента</title>
+<style>
+:root{
+  --bg:#15161a;
+  --panel:#1d1f24;
+  --panel2:#24262c;
+  --panel3:#2c2f36;
+  --border:#34373f;
+  --border2:#41454e;
+  --text:#e9ebee;
+  --muted:#969ba5;
+  --muted2:#6b707a;
+  --accent:#4c8dff;
+  --accent2:#7c5cff;
+  --danger:#ff5f6d;
+  --ok:#2ecc71;
+  --r:10px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:"Inter","Segoe UI",Roboto,system-ui,-apple-system,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-size:13px;
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#3a3d45;border-radius:6px;border:2px solid var(--panel)}
+::-webkit-scrollbar-thumb:hover{background:#4a4e58}
+
+/* ---------- topbar ---------- */
+.topbar{
+  height:54px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;background:var(--panel);border-bottom:1px solid var(--border);
+  flex:0 0 auto;gap:16px;
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.2px;font-size:14px}
+.brand .dot{
+  width:24px;height:24px;border-radius:8px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 10px rgba(76,141,255,.35);
+}
+.brand .dot svg{width:14px;height:14px}
+.brand small{color:var(--muted);font-weight:500;margin-left:2px}
+.top-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* ---------- language switch ---------- */
+.lang-switch{
+  display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;
+  background:var(--panel2);flex:0 0 auto;
+}
+.lang-switch button{
+  height:30px;padding:0 12px;background:transparent;border:none;
+  color:var(--muted);cursor:pointer;font-size:11.5px;font-weight:700;
+  letter-spacing:.4px;transition:.14s;
+}
+.lang-switch button + button{border-left:1px solid var(--border)}
+.lang-switch button:hover{background:var(--panel3);color:var(--text)}
+.lang-switch button.active{background:var(--accent);color:#fff}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;justify-content:center;
+  height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border2);
+  background:var(--panel2);cursor:pointer;font-size:12.5px;font-weight:500;
+  transition:.14s;white-space:nowrap;user-select:none;
+}
+.btn:hover{background:var(--panel3);border-color:#50555f}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:linear-gradient(135deg,var(--accent),#3b7bf0);border-color:transparent;color:#fff;font-weight:600}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+.btn.support{color:#ffd28a;border-color:#55482c;background:linear-gradient(135deg,#292417,#332a1b);text-decoration:none}
+.btn.support:hover{background:#3b3120;border-color:#6d5a35;color:#ffe2ae}
+.btn.danger{color:var(--danger);border-color:#4a2a2f}
+.btn.danger:hover{background:#3a2024}
+.btn.sm{height:28px;padding:0 10px;font-size:12px}
+.btn.full{width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ---------- layout ---------- */
+.app{display:flex;flex-direction:column;height:100%}
+.workspace{display:flex;flex:1;min-height:0}
+.sidebar{
+  width:388px;flex:0 0 388px;background:var(--panel);border-right:1px solid var(--border);
+  overflow-y:auto;overflow-x:hidden;padding-bottom:60px;
+}
+.canvas-area{
+  flex:1;min-width:0;
+  position:relative;
+  overflow:hidden;
+  padding:64px 30px 30px;
+  display:flex;justify-content:center;align-items:center;
+  background:
+    radial-gradient(circle at 20% 0%,rgba(76,141,255,.06),transparent 55%),
+    radial-gradient(circle at 85% 15%,rgba(124,92,255,.06),transparent 50%),
+    var(--bg);
+}
+
+/* ---------- chart-type floating bar ---------- */
+.chart-type-bar{
+  position:absolute;
+  top:14px;left:50%;
+  transform:translateX(-50%);
+  z-index:5;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:4px;
+  box-shadow:0 8px 24px rgba(0,0,0,.5);
+}
+.chart-type-bar .seg{border:none;background:transparent;border-radius:7px}
+.chart-type-bar .seg button{height:28px;padding:0 16px;font-size:12.5px;border-radius:6px}
+.chart-type-bar .seg button + button{border-left:none}
+
+.stage{
+  display:inline-block;
+  border-radius:14px;
+  box-shadow:0 10px 34px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.06);
+  background-image:
+    linear-gradient(45deg,#26282e 25%,transparent 25%),
+    linear-gradient(-45deg,#26282e 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#26282e 75%),
+    linear-gradient(-45deg,transparent 75%,#26282e 75%);
+  background-size:20px 20px;
+  background-position:0 0,0 10px,10px -10px,-10px 0;
+  background-color:#1b1c21;
+  overflow:hidden;
+  line-height:0;
+}
+#preview{display:block;touch-action:none;cursor:default}
+
+/* ---------- sections ---------- */
+.sec{border-bottom:1px solid var(--border)}
+.sec-h{
+  display:flex;align-items:center;gap:8px;
+  padding:13px 16px;cursor:pointer;user-select:none;
+  font-size:11px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;
+  color:var(--muted);
+}
+.sec-h:hover{color:var(--text)}
+.sec-h .chev{margin-left:auto;transition:.2s;opacity:.6}
+.sec.open .sec-h .chev{transform:rotate(90deg)}
+.sec-b{display:none;padding:0 16px 18px}
+.sec.open .sec-b{display:block}
+.badge{
+  background:var(--panel3);color:var(--muted);border-radius:20px;
+  padding:1px 8px;font-size:10.5px;font-weight:700;letter-spacing:0;
+}
+.hint{color:var(--muted2);font-size:11.5px;line-height:1.5;margin-top:10px}
+
+/* ---------- fields ---------- */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:6px;font-weight:500}
+.input,select.input{
+  width:100%;height:34px;background:var(--panel2);border:1px solid var(--border);
+  border-radius:8px;padding:0 10px;outline:none;transition:.14s;
+}
+.input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(76,141,255,.16)}
+.input[readonly]{background:var(--panel);color:var(--muted);cursor:default}
+.input[readonly]:focus{border-color:var(--border);box-shadow:none}
+select.input{cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M1 3l4 4 4-4' fill='none' stroke='%23969ba5' stroke-width='1.6' stroke-linecap='round'/></svg>");
+  background-repeat:no-repeat;background-position:right 11px center;padding-right:28px;
+}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+
+/* ---------- segmented ---------- */
+.seg{display:flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--panel2)}
+.seg button{
+  flex:1;height:30px;background:transparent;border:none;color:var(--muted);
+  cursor:pointer;font-size:12px;font-weight:500;transition:.14s;
+}
+.seg button + button{border-left:1px solid var(--border)}
+.seg button:hover{background:var(--panel3);color:var(--text)}
+.seg button.active{background:var(--accent);color:#fff}
+
+/* ---------- title style buttons ---------- */
+.title-styles{display:flex;gap:4px}
+.tstyle-btn{
+  flex:1;height:32px;border-radius:6px;border:1px solid var(--border);
+  background:var(--panel2);cursor:pointer;font-size:13px;font-weight:600;
+  color:var(--muted);transition:.14s;
+}
+.tstyle-btn:hover{background:var(--panel3);color:var(--text);border-color:var(--border2)}
+.tstyle-btn.active{background:var(--accent);color:#fff;border-color:transparent}
+
+/* ---------- color control ---------- */
+.color-btn{
+  width:100%;height:34px;border-radius:8px;border:1px solid var(--border);
+  background:var(--panel2);cursor:pointer;display:flex;align-items:center;gap:8px;padding:4px 8px;
+  transition:.14s;text-align:left;
+}
+.color-btn:hover{border-color:var(--border2);background:var(--panel3)}
+.color-btn:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(76,141,255,.16)}
+.color-btn .cf-sw{
+  width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,.15);flex:0 0 auto;
+}
+.color-btn .cf-hex{font-size:12px;font-variant-numeric:tabular-nums;color:var(--text)}
+
+/* ---------- party list ---------- */
+.party-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.party{
+  background:var(--panel2);border:1px solid var(--border);border-radius:var(--r);
+  padding:9px 10px;transition:.15s;
+}
+.party:hover{border-color:var(--border2)}
+.party.is-coal{border-color:rgba(76,141,255,.5);background:linear-gradient(180deg,rgba(76,141,255,.09),var(--panel2) 60%)}
+.pr-top{display:flex;align-items:center;gap:7px}
+.swatch{
+  width:24px;height:24px;padding:0;border:1px solid rgba(255,255,255,.18);border-radius:7px;
+  cursor:pointer;flex:0 0 auto;background:transparent;transition:.14s;
+}
+.swatch:hover{border-color:var(--border2);transform:scale(1.06)}
+.pname{
+  flex:1;min-width:0;height:26px;background:transparent;border:1px solid transparent;
+  border-radius:6px;padding:0 6px;font-weight:600;font-size:12.5px;outline:none;
+}
+.pname:hover{border-color:var(--border)}
+.pname:focus{border-color:var(--accent);background:var(--panel)}
+.icon-btn{
+  width:24px;height:24px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+  border-radius:6px;border:1px solid transparent;background:transparent;cursor:pointer;
+  color:var(--muted2);transition:.14s;
+}
+.icon-btn:hover{background:var(--panel3);color:var(--text)}
+.icon-btn.on{color:var(--accent);background:rgba(76,141,255,.14);border-color:rgba(76,141,255,.35)}
+.icon-btn.on.lock{color:#ffb020;background:rgba(255,176,32,.13);border-color:rgba(255,176,32,.32)}
+.icon-btn.del:hover{color:var(--danger);background:rgba(255,95,109,.13)}
+.icon-btn svg{width:14px;height:14px;display:block}
+.pr-bottom{display:flex;align-items:center;gap:8px;margin-top:8px}
+input[type=range]{
+  flex:1;min-width:0;height:18px;appearance:none;background:transparent;cursor:pointer;margin:0;
+}
+input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:4px;background:#3a3d46}
+input[type=range]::-webkit-slider-thumb{
+  appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;
+  margin-top:-4.5px;box-shadow:0 1px 4px rgba(0,0,0,.6);border:none;
+}
+input[type=range]::-moz-range-track{height:5px;border-radius:4px;background:#3a3d46}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border:none;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+.pct-num{
+  width:52px;height:26px;background:var(--panel);border:1px solid var(--border);
+  border-radius:6px;text-align:right;padding:0 5px;outline:none;font-size:12px;font-variant-numeric:tabular-nums;
+}
+.pct-num:focus{border-color:var(--accent)}
+.pct-sign{color:var(--muted2);font-size:11px;margin-left:-4px}
+.seats-badge{
+  min-width:38px;text-align:center;background:var(--panel3);border-radius:6px;
+  padding:3px 6px;font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums;color:#c9ced8;
+}
+/* party status row */
+.pr-status{display:flex;align-items:center;gap:6px;margin-top:8px}
+.delta-inp{
+  flex:1;min-width:0;height:26px;background:var(--panel);border:1px solid var(--border);
+  border-radius:6px;text-align:right;padding:0 8px;outline:none;font-size:11.5px;
+  font-variant-numeric:tabular-nums;color:var(--text);
+}
+.delta-inp:focus{border-color:var(--accent)}
+.delta-inp::placeholder{color:var(--muted2);text-align:right}
+.seg.compact{flex:0 0 auto;width:auto}
+.seg.compact button{height:26px;min-width:32px;padding:0 6px;font-size:13px;line-height:1}
+
+/* ---------- toggle switch ---------- */
+.tg{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0}
+.tg span{font-size:12px;color:var(--muted)}
+.switch{position:relative;width:34px;height:19px;flex:0 0 auto}
+.switch input{opacity:0;width:0;height:0}
+.slider{
+  position:absolute;inset:0;background:#3c4049;border-radius:20px;cursor:pointer;transition:.2s;
+}
+.slider:before{
+  content:"";position:absolute;width:13px;height:13px;left:3px;top:3px;
+  background:#fff;border-radius:50%;transition:.2s;
+}
+.switch input:checked + .slider{background:var(--accent)}
+.switch input:checked + .slider:before{transform:translateX(15px)}
+
+/* ---------- presets ---------- */
+.presets{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.preset{
+  border-radius:9px;border:1px solid var(--border);padding:7px 8px;cursor:pointer;
+  display:flex;align-items:center;gap:8px;background:var(--panel2);transition:.15s;
+  font-size:11.5px;font-weight:600;
+}
+.preset:hover{border-color:var(--border2);transform:translateY(-1px)}
+.preset.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(76,141,255,.2)}
+.preset .pv{width:22px;height:22px;border-radius:6px;flex:0 0 auto;border:1px solid rgba(255,255,255,.12)}
+
+/* ---------- font combobox ---------- */
+.combo{position:relative}
+.combo-list{
+  position:absolute;z-index:60;top:calc(100% + 4px);left:0;right:0;max-height:250px;overflow-y:auto;
+  background:var(--panel2);border:1px solid var(--border2);border-radius:9px;
+  box-shadow:0 16px 40px rgba(0,0,0,.6);display:none;padding:4px;
+}
+.combo-list.show{display:block}
+.combo-item{
+  padding:7px 10px;border-radius:6px;cursor:pointer;font-size:13px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.combo-item:hover{background:var(--panel3)}
+.combo-item.active{background:rgba(76,141,255,.16);color:#a9c7ff}
+.combo-empty{padding:10px;color:var(--muted2);font-size:12px;text-align:center}
+
+/* ---------- templates ---------- */
+.tpl-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.tpl-item{
+  display:flex;align-items:center;gap:8px;background:var(--panel2);
+  border:1px solid var(--border);border-radius:8px;padding:7px 9px;cursor:pointer;transition:.15s;
+}
+.tpl-item:hover{border-color:var(--border2);background:var(--panel3)}
+.tpl-item .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:12px}
+.tpl-item .dt{font-size:10.5px;color:var(--muted2)}
+
+/* ---------- majority panel ---------- */
+.majority-panel{
+  margin:8px 0 6px;padding:10px 12px;
+  background:var(--panel2);border:1px solid var(--border);border-radius:9px;
+}
+.majority-panel .tg{padding:4px 0}
+.majority-panel .field{margin-bottom:10px}
+
+/* ---------- misc ---------- */
+.upload-zone{
+  border:1.5px dashed var(--border2);border-radius:9px;padding:14px;text-align:center;
+  cursor:pointer;transition:.15s;color:var(--muted);font-size:12px;
+}
+.upload-zone:hover{border-color:var(--accent);color:var(--text);background:rgba(76,141,255,.05)}
+.thumb-row{display:flex;align-items:center;gap:10px;margin-top:8px}
+.thumb{width:44px;height:44px;border-radius:8px;background:var(--panel3);object-fit:contain;padding:4px}
+.divider{height:1px;background:var(--border);margin:14px 0}
+.sub-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted2);font-weight:700;margin:14px 0 8px}
+.sub-label:first-child{margin-top:0}
+.toast{
+  position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);opacity:0;
+  background:#2b2f38;border:1px solid var(--border2);color:var(--text);
+  padding:10px 18px;border-radius:10px;font-size:12.5px;font-weight:600;
+  box-shadow:0 12px 34px rgba(0,0,0,.55);pointer-events:none;transition:.25s;z-index:999;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- color picker popover ---------- */
+.cp-pop{
+  position:fixed;z-index:1000;width:248px;
+  background:var(--panel2);border:1px solid var(--border2);border-radius:12px;
+  box-shadow:0 18px 50px rgba(0,0,0,.65);padding:12px;display:none;
+}
+.cp-pop.show{display:block}
+.cp-sv{
+  position:relative;width:100%;height:150px;border-radius:8px;cursor:crosshair;overflow:hidden;
+  background:linear-gradient(to top,#000,transparent),linear-gradient(to right,#fff,transparent),hsl(0,100%,50%);
+  touch-action:none;
+}
+.cp-sv-handle{
+  position:absolute;width:14px;height:14px;border-radius:50%;
+  border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.5);
+  transform:translate(-50%,-50%);pointer-events:none;
+}
+.cp-slider{
+  position:relative;height:14px;border-radius:8px;margin-top:10px;cursor:pointer;touch-action:none;
+}
+.cp-hue{background:linear-gradient(to right,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000)}
+.cp-alpha{
+  background-image:
+    linear-gradient(to right,rgba(255,255,255,0),var(--c,#fff)),
+    repeating-conic-gradient(#888 0 25%,#555 0 50%);
+  background-size:100% 100%,8px 8px;
+}
+.cp-sl-handle{
+  position:absolute;top:50%;width:16px;height:16px;border-radius:50%;
+  background:#fff;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.5);
+  transform:translate(-50%,-50%);pointer-events:none;
+}
+.cp-row{display:flex;align-items:center;gap:8px;margin-top:12px}
+.cp-prev{
+  width:32px;height:32px;border-radius:8px;flex:0 0 auto;border:1px solid rgba(255,255,255,.18);
+}
+.cp-hex{
+  flex:1;min-width:0;height:32px;background:var(--panel);border:1px solid var(--border);
+  border-radius:8px;padding:0 10px;outline:none;font-size:12.5px;font-variant-numeric:tabular-nums;
+  text-transform:uppercase;letter-spacing:.3px;
+}
+.cp-hex:focus{border-color:var(--accent)}
+.cp-palette{
+  display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-top:12px;
+}
+.cp-sw{
+  aspect-ratio:1;border-radius:5px;border:1px solid rgba(255,255,255,.12);
+  cursor:pointer;padding:0;transition:.12s;
+}
+.cp-sw:hover{transform:scale(1.15);border-color:#fff}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <span class="dot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round">
+          <path d="M4 20a8 8 0 0 1 16 0"/><circle cx="12" cy="5" r="1.6" fill="#fff" stroke="none"/>
+        </svg>
+      </span>
+      Parliament Studio <small data-i18n="brand.sub">arch diagrams</small>
+    </div>
+    <div class="top-actions">
+      <div class="lang-switch" id="langBtns" data-i18n-title="ui.lang" title="Язык интерфейса">
+        <button type="button" data-v="ru" class="active" title="Русский">RU</button>
+        <button type="button" data-v="en" title="English">EN</button>
+        <button type="button" data-v="fr" title="Français">FR</button>
+      </div>
+      <select id="exportScale" class="input" style="width:74px;height:32px">
+        <option value="1">×1</option>
+        <option value="2" selected>×2</option>
+        <option value="3">×3</option>
+      </select>
+      <button class="btn primary" id="btnPng">PNG</button>
+      <button class="btn" id="btnSvg">SVG</button>
+      <button class="btn" id="btnSaveJson">↓ JSON</button>
+      <button class="btn" id="btnLoadJson">↑ JSON</button>
+      <a class="btn support" id="btnSupport" href="https://boosty.to/joker_exe6/donate" target="_blank" rel="noopener noreferrer" data-i18n="btn.support">☕ Поддержать проект</a>
+      <input type="file" id="fileJson" accept="application/json,.json" style="display:none">
+    </div>
+  </div>
+
+  <div class="workspace">
+    <aside class="sidebar">
+
+      <!-- Парламент -->
+      <section class="sec open">
+        <header class="sec-h">
+          <span data-i18n="sec.parliament">Парламент</span>
+          <svg class="chev" width="10" height="10" viewBox="0 0 10 10"><path d="M3 1l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </header>
+        <div class="sec-b">
+          <div class="field">
+            <label data-i18n="field.totalSeats">Общее число мест</label>
+            <input class="input" type="number" id="totalSeats" min="1" max="2000" step="1" value="450">
+          </div>
+          <div class="field">
+            <label data-i18n="field.sortMode">Порядок в легенде и на диаграмме</label>
+            <select class="input" id="sortMode">
+              <option value="seats-desc" data-i18n="sort.seatsDesc">По местам — убывание</option>
+              <option value="seats-asc" data-i18n="sort.seatsAsc">По местам — возрастание</option>
+              <option value="name" data-i18n="sort.name">По алфавиту</option>
+              <option value="manual" data-i18n="sort.manual">Вручную (порядок списка)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Партии -->
+      <section class="sec open">
+        <header class="sec-h">
+          <span data-i18n="sec.parties">Партии</span>
+          <span class="badge" id="partyCount">0</span>
+          <svg class="chev" width="10" height="10" viewBox="0 0 10 10"><path d="M3 1l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </header>
+        <div class="sec-b">
+          <div id="partyList" class="party-list"></div>
+          <button class="btn full" id="btnAddParty" data-i18n="btn.addParty">+ Добавить партию</button>
+          <div class="hint" data-i18n="hint.parties">Сумма долей всегда 100 %. 🔒 — партия не участвует в автопересчёте. ⚑ — входит в коалицию. Δ — изменение мест к прошлым выборам. ●/○/⊘ — обычные / вакантные / внефракционные.</div>
+        </div>
+      </section>
+
+      <!-- Геометрия диаграммы -->
+      <section class="sec open">
+        <header class="sec-h">
+          <span data-i18n="sec.geometry">Геометрия диаграммы</span>
+          <svg class="chev" width="10" height="10" viewBox="0 0 10 10"><path d="M3 1l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </header>
+        <div class="sec-b">
+          <div class="field" id="arcDegreesWrap">
+            <label data-i18n="field.arc">Форма дуги (классическая)</label>
+            <div class="seg" id="arcDegreesBtns">
+              <button type="button" data-v="180" class="active">180°</button>
+              <button type="button" data-v="240">240°</button>
+              <button type="button" data-v="360">360°</button>
+            </div>
+          </div>
+
+          <div class="tg" style="margin-bottom:2px"><span data-i18n="tg.seatAuto">Авторазмер мандатов</span>
+            <label class="switch"><input type="checkbox" id="seatAutoSize" checked><span class="slider"></span></label></div>
+
+          <div class="field" id="seatSizeField" style="opacity:.45;pointer-events:none">
+            <label><span data-i18n="field.seatSize">Размер мандатов</span> <span id="seatSizeLabel" style="color:var(--muted2);font-weight:400"></span></label>
+            <input type="range" id="seatSizeRange" min="0.15" max="1.2" step="0.01" value="0.85">
+          </div>
+
+          <div class="field">
+            <label><span data-i18n="field.innerRadius">Внутренний радиус</span> <span id="innerRadiusLabel" style="color:var(--muted2);font-weight:400"></span></label>
+            <input type="range" id="innerRadiusRange" min="0" max="200" step="1" value="0">
+          </div>
+
+          <div class="field">
+            <label data-i18n="field.seatShape">Форма мест</label>
+            <div class="seg" id="seatShapeBtns">
+              <button type="button" data-v="circle" class="active" data-i18n="seatShape.circle">Круги</button>
+              <button type="button" data-v="square" data-i18n="seatShape.square">Скруглённые квадраты</button>
+              <button type="button" data-v="square-sharp" data-i18n="seatShape.sharp">Квадраты</button>
+            </div>
+          </div>
+
+          <div class="hint" data-i18n="hint.geometry">Настройки применяются к диаграмме любого типа. «Внутренний радиус» увеличивает пустоту в центре дуги (только для классической).</div>
+        </div>
+      </section>
+
+      <!-- Шапка -->
+      <section class="sec open">
+        <header class="sec-h">
+          <span data-i18n="sec.header">Шапка карточки</span>
+          <svg class="chev" width="10" height="10" viewBox="0 0 10 10"><path d="M3 1l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </header>
+        <div class="sec-b">
+          <div class="field">
+            <label data-i18n="field.cardTitle">Заголовок</label>
+            <input class="input" type="text" id="cardTitle" data-i18n-ph="ph.cardTitle" placeholder="Например: Национальное собрание">
+          </div>
+
+          <div class="sub-label" data-i18n="sub.titleSettings">Настройки заголовка</div>
+          <div class="row2 field">
+            <div>
+              <label data-i18n="field.titleSize">Размер, px</label>
+              <input class="input" type="number" id="titleSize" min="16" max="200" step="1" value="62">
+            </div>
+            <div>
+              <label data-i18n="field.titleLS">Letter-spacing, px</label>
+              <input class="input" type="number" id="titleLetterSpacing" min="-10" max="50" step="0.5" value="0">
+            </div>
+          </div>
+          <div class="field">
+            <label data-i18n="field.align">Выравнивание</label>
+            <div class="seg" id="titleAlignBtns">
+              <button type="button" data-v="left" data-i18n="align.left">Слева</button>
+              <button type="button" data-v="center" class="active" data-i18n="align.center">По центру</button>
+              <button type="button" data-v="right" data-i18n="align.right">Справа</button>
+            </div>
+          </div>
+          <div class="field">
+            <label data-i18n="field.titleStyle">Начертание</label>
+            <div class="title-styles">
+              <button type="button" class="tstyle-btn active" data-v="bold"><b>B</b></button>
+              <button type="button" class="tstyle-btn" data-v="italic"><i>I</i></button>
+              <button type="button" class="tstyle-btn" data-v="underline"><u>U</u></button>
+              <button type="button" class="tstyle-btn" data-v="upper">AA</button>
+            </div>
+          </div>
+          <div class="row2 field">
+            <div>
+              <label data-i18n="field.titlePadTop">Отступ сверху, px</label>
+              <input class="input" type="number" id="titlePadTop" min="0" max="200" step="1" value="0">
+            </div>
+            <div>
+              <label data-i18n="field.titlePadBottom">Отступ снизу, px</label>
+              <input class="input" type="number" id="titlePadBottom" min="0" max="200" step="1" value="0">
+            </div>
+          </div>
+          <div class="field">
+            <label data-i18n="field.titleColor">Цвет заголовка</label>
+            <button class="color-btn" id="colTitle"></button>
+          </div>
+          <div class="tg"><span data-i18n="tg.textShadow">Тень текста</span>
+            <label class="switch"><input type="checkbox" id="titleShadow"><span class="slider"></span></label></div>
+          <div class="tg"><span data-i18n="tg.textStroke">Обводка текста</span>
+            <label class="switch"><input type="checkbox" id="titleStroke"><span class="slider"></span></label></div>
+          <div class="field" id="titleStrokeWidthField" style="display:none">
+            <label data-i18n="field.strokeWidth">Толщина обводки, px</label>
+            <input class="input" type="number" id="titleStrokeWidth" min="0.5" max="10" step="0.5" value="2">
+          </div>
+
+          <div class="sub-label" data-i18n="sub.logo">Логотип / флаг / герб</div>
+          <div class="upload-zone" id="logoZone" data-i18n="upload.logo">Нажмите, чтобы загрузить изображение</div>
+          <div class="thumb-row" id="logoThumbRow" style="display:none">
+            <img class="thumb" id="logoThumb" alt="">
+            <button class="btn sm danger" id="btnRemoveLogo" data-i18n="btn.remove">Удалить</button>
+          </div>
+          <input type="file" id="fileLogo" accept="image/*" style="display:none">
+          <div class="field" style="margin-top:12px">
+            <label data-i18n="field.logoPos">Положение логотипа</label>
+            <select class="input" id="logoPos">
+              <option value="above-left" data-i18n="logoPos.aboveLeft">Над заголовком — слева</option>
+              <option value="above-center" selected data-i18n="logoPos.aboveCenter">Над заголовком — по центру</option>
+              <option value="above-right" data-i18n="logoPos.aboveRight">Над заголовком — справа</option>
+              <option value="beside-left" data-i18n="logoPos.besideLeft">Слева от заголовка</option>
+              <option value="beside-right" data-i18n="logoPos.besideRight">Справа от заголовка</option>
+              <option value="manual" data-i18n="logoPos.manual">Свободное перемещение</option>
+            </select>
+          </div>
+          <div class="row2" id="logoOffsetField" style="display:none">
+            <div class="field">
+              <label data-i18n="field.offsetX">Смещение X</label>
+              <input class="input" type="number" id="logoOffsetX" step="1" value="0">
+            </div>
+            <div class="field">
+              <label data-i18n="field.offsetY">Смещение Y</label>
+              <input class="input" type="number" id="logoOffsetY" step="1" value="0">
+            </div>
+          </div>
+          <div class="hint" data-i18n="hint.logo">Пресеты положения логотипа задают жёсткую привязку к холсту. Перетаскивание мышкой автоматически переключает на «Свободное перемещение», а выбор пресета сбрасывает ручное смещение.</div>
+        </div>
+      </section>
+
+      <!-- Оформление -->
+      <section class="sec open">
+        <header class="sec-h">
+          <span data-i18n="sec.style">Оформление</span>
+          <svg class="chev" width="10" height="10" viewBox="0 0 10 10"><path d="M3 1l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </header>
+        <div class="sec-b">
+          <div class="sub-label" data-i18n="sub.presets">Шаблоны дизайна</div>
+          <div class="presets" id="presets"></div>
+
+          <div class="sub-label" data-i18n="sub.font">Шрифт</div>
+          <div class="combo" id="fontCombo">
+            <input class="input" type="text" id="fontInput" data-i18n-ph="ph.font" placeholder="Поиск шрифта…" autocomplete="off" spellcheck="false">
+            <div class="combo-list" id="fontList"></div>
+          </div>
+
+          <div class="sub-label" data-i18n="sub.bg">Фон карточки</div>
+          <div class="field">
+            <select class="input" id="bgType">
+              <option value="solid" data-i18n="bg.solid">Сплошной цвет</option>
+              <option value="gradient" data-i18n="bg.gradient">Градиент</option>
+              <option value="image" data-i18n="bg.image">Своя картинка</option>
+              <option value="transparent" data-i18n="bg.transparent">Прозрачный</option>
+            </select>
+          </div>
+          <div id="bgSolidWrap" class="field">
+            <label data-i18n="field.bgColor">Цвет фона</label>
+            <button class="color-btn" id="bg1"></button>
+          </div>
+          <div id="bgGradWrap" style="display:none">
+            <div class="row3 field">
+              <div><label style="font-size:11.5px;color:var(--muted)" data-i18n="label.from">От</label><button class="color-btn" id="bg1b"></button></div>
+              <div><label style="font-size:11.5px;color:var(--muted)" data-i18n="label.to">До</label><button class="color-btn" id="bg2"></button></div>
+              <div><label style="font-size:11.5px;color:var(--muted)" data-i18n="label.angle">Угол</label><input type="number" class="input" id="bgAngle" min="0" max="360" step="5" style="height:34px"></div>
+            </div>
+          </div>
+          <div id="bgImageWrap" style="display:none">
+            <div class="upload-zone" id="bgZone" data-i18n="upload.bg">Загрузить фоновое изображение</div>
+            <div class="thumb-row" id="bgThumbRow" style="display:none">
+              <img class="thumb" id="bgThumb" alt="" style="width:64px">
+              <button class="btn sm danger" id="btnRemoveBg" data-i18n="btn.remove">Удалить</button>
+            </div>
+            <input type="file" id="fileBg" accept="image/*" style="display:none">
+          </div>
+
+          <div class="sub-label" data-i18n="sub.textColors">Цвета текста</div>
+          <div class="row2 field">
+            <div><label style="font-size:11.5px;color:var(--muted)" data-i18n="label.text">Текст</label><button class="color-btn" id="colText"></button></div>
+            <div><label style="font-size:11.5px;color:var(--muted)" data-i18n="label.accent">Акцент</label><button class="color-btn" id="colAccent"></button></div>
+          </div>
+
+          <div class="sub-label" data-i18n="sub.cardElements">Элементы карточки</div>
+          <div class="tg"><span data-i18n="tg.header">Шапка (лого + заголовок)</span>
+            <label class="switch"><input type="checkbox" id="tShowHeader" checked><span class="slider"></span></label></div>
+          <div class="tg"><span data-i18n="tg.count">Счётчик мест</span>
+            <label class="switch"><input type="checkbox" id="tShowCount" checked><span class="slider"></span></label></div>
+          <div class="tg"><span data-i18n="tg.legend">Легенда партий</span>
+            <label class="switch"><input type="checkbox" id="tShowLegend" checked><span class="slider"></span></label></div>
+          <div class="tg"><span data-i18n="tg.coalFrame">Рамка коалиции</span>
+            <label class="switch"><input type="checkbox" id="tShowCoal" checked><span class="slider"></span></label></div>
+          <div class="tg"><span data-i18n="tg.majority">Порог большинства</span>
+            <label class="switch"><input type="checkbox" id="tShowMajority"><span class="slider"></span></label></div>
+          <div id="majorityPanel" class="majority-panel" style="display:none">
+            <div class="field">
+              <label data-i18n="field.majorityType">Тип порога</label>
+              <select class="input" id="majorityPreset">
+                <option value="simple" data-i18n="majority.simple">Простое большинство (50% + 1)</option>
+                <option value="qualified" data-i18n="majority.qualified">Квалифицированное (3/5 = 60%)</option>
+                <option value="constitutional" data-i18n="majority.constitutional">Конституционное (2/3 ≈ 66.7%)</option>
+                <option value="custom" data-i18n="majority.custom">Своё значение</option>
+              </select>
+            </div>
+            <div class="field">
+              <label data-i18n="field.majoritySeats">Точное значение, мандатов</label>
+              <input class="input" type="number" id="majoritySeats" min="0" step="1" value="226">
+            </div>
+            <div class="field">
+              <label data-i18n="field.majorityLabel">Подпись на диаграмме</label>
+              <input class="input" type="text" id="majorityLabel" placeholder="Авто: Большинство: X мандатов" autocomplete="off">
+            </div>
+            <div class="field">
+              <label data-i18n="field.majorityColor">Цвет линии и подписи</label>
+              <button class="color-btn" id="majorityColor"></button>
+            </div>
+            <div class="tg"><span data-i18n="tg.majorityOccupied">Считать только от занятых мест</span>
+              <label class="switch"><input type="checkbox" id="majorityOnlyOccupied"><span class="slider"></span></label></div>
+            <div class="hint" style="margin-top:6px" data-i18n="hint.majority">Линия отображается только в классическом режиме диаграммы. Вакантные места (○) не учитываются при включённой опции выше.</div>
+          </div>
+
+          <div class="sub-label" data-i18n="sub.footer">Подвал карточки</div>
+          <div class="field">
+            <label data-i18n="field.footer">Источник / примечание</label>
+            <input class="input" type="text" id="footerText" data-i18n-ph="ph.footer" placeholder="Источник: ЦИК, 2026" autocomplete="off">
+          </div>
+        </div>
+      </section>
+
+      <!-- Коалиция -->
+      <section class="sec open">
+        <header class="sec-h">
+          <span data-i18n="sec.coalition">Рамка коалиции</span>
+          <svg class="chev" width="10" height="10" viewBox="0 0 10 10"><path d="M3 1l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </header>
+        <div class="sec-b">
+          <div class="row2">
+            <div class="field">
+              <label data-i18n="field.coalRadius">Скругление, px</label>
+              <input class="input" type="number" id="coalRadius" min="0" max="50" step="1" value="18">
+            </div>
+            <div class="field">
+              <label data-i18n="field.coalWidth">Толщина рамки, px</label>
+              <input class="input" type="number" id="coalWidth" min="1" max="15" step="0.5" value="2.5">
+            </div>
+          </div>
+          <div class="field">
+            <label data-i18n="field.align">Выравнивание</label>
+            <div class="seg" id="coalAlign">
+              <button type="button" data-v="left" data-i18n="align.left">Слева</button>
+              <button type="button" data-v="center" class="active" data-i18n="align.center">По центру</button>
+              <button type="button" data-v="right" data-i18n="align.right">Справа</button>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label data-i18n="field.offsetX">Смещение X</label>
+              <input class="input" type="number" id="coalOffsetX" step="1" value="0">
+            </div>
+            <div class="field">
+              <label data-i18n="field.offsetY">Смещение Y</label>
+              <input class="input" type="number" id="coalOffsetY" step="1" value="0">
+            </div>
+          </div>
+
+          <div class="sub-label" data-i18n="sub.coalStroke">Обводка коалиционных мест</div>
+          <div class="field">
+            <label><span data-i18n="field.coalStrokeWidth">Толщина обводки</span> <span id="coalStrokeWidthLabel" style="color:var(--muted2);font-weight:400"></span></label>
+            <input type="range" id="coalSeatStrokeWidth" min="0" max="5" step="0.5" value="1.5">
+          </div>
+          <div class="field">
+            <label data-i18n="field.coalStrokeColor">Цвет обводки</label>
+            <button class="color-btn" id="coalSeatStrokeColor"></button>
+          </div>
+
+          <div class="hint" data-i18n="hint.coalition">Пресеты выравнивания задают абсолютное положение рамки на холсте (слева / по центру / справа) и сбрасывают ручное смещение. Перетаскивание рамки мышкой добавляет смещение поверх выбранного пресета. Обводка мест применяется ко всем местам партий с флагом ⚑ (при 0 — обводка отключена).</div>
+        </div>
+      </section>
+
+      <!-- Шаблоны -->
+      <section class="sec">
+        <header class="sec-h">
+          <span data-i18n="sec.templates">Шаблоны стран</span>
+          <svg class="chev" width="10" height="10" viewBox="0 0 10 10"><path d="M3 1l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </header>
+        <div class="sec-b">
+          <div class="row2">
+            <input class="input" type="text" id="tplName" data-i18n-ph="ph.tplName" placeholder="Название шаблона">
+            <button class="btn primary" id="btnSaveTpl" data-i18n="btn.save">Сохранить</button>
+          </div>
+          <div class="tpl-list" id="tplList"></div>
+          <div class="hint" data-i18n="hint.templates">Шаблоны хранятся в этом браузере (localStorage). Для переноса на другой компьютер используйте кнопки ↓ JSON / ↑ JSON в верхней панели.</div>
+        </div>
+      </section>
+
+    </aside>
+
+    <main class="canvas-area" id="canvasArea">
+      <div class="chart-type-bar">
+        <div class="seg" id="chartTypeBtns">
+          <button type="button" data-v="classic" class="active" data-i18n="chart.classic">Классическая</button>
+          <button type="button" data-v="westminster" data-i18n="chart.westminster">Вестминстерская</button>
+        </div>
+      </div>
+      <div class="stage"><canvas id="preview"></canvas></div>
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   1. УТИЛИТЫ
+   ========================================================= */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const uid = () => Math.random().toString(36).slice(2, 10);
+const fmtPct = v => (Math.round(v * 10) / 10).toFixed(1).replace('.', ',');
+
+/* =========================================================
+   1c. ЛОКАЛИЗАЦИЯ КАРТОЧКИ (RU / EN / FR)
+   ========================================================= */
+const I18N = {
+  ru: { seatWord: 'мандатов', majority: 'Большинство', coalition: 'Коалиция' },
+  en: { seatWord: 'seats',    majority: 'Majority',    coalition: 'Coalition' },
+  fr: { seatWord: 'sièges',   majority: 'Majorité',    coalition: 'Coalition' }
+};
+
+function getLang() {
+  return (state && state.design && state.design.lang) || 'ru';
+}
+function getT() {
+  return I18N[getLang()] || I18N.ru;
+}
+function seatWord(n, lang) {
+  const t = I18N[lang || 'ru'] || I18N.ru;
+  return t.seatWord;
+}
+
+/* =========================================================
+   1d. ЛОКАЛИЗАЦИЯ ИНТЕРФЕЙСА (RU / EN / FR)
+   ========================================================= */
+const UI_I18N = {
+  ru: {
+    'doc.title': 'Parliament Studio — конструктор диаграмм парламента',
+    'brand.sub': 'диаграммы парламента',
+    'ui.lang': 'Язык интерфейса',
+    'sec.parliament': 'Парламент',
+    'sec.parties': 'Партии',
+    'sec.geometry': 'Геометрия диаграммы',
+    'sec.header': 'Шапка карточки',
+    'sec.style': 'Оформление',
+    'sec.coalition': 'Рамка коалиции',
+    'sec.templates': 'Шаблоны стран',
+    'field.totalSeats': 'Общее число мест',
+    'field.sortMode': 'Порядок в легенде и на диаграмме',
+    'sort.seatsDesc': 'По местам — убывание',
+    'sort.seatsAsc': 'По местам — возрастание',
+    'sort.name': 'По алфавиту',
+    'sort.manual': 'Вручную (порядок списка)',
+    'btn.addParty': '+ Добавить партию',
+    'hint.parties': 'Сумма долей всегда 100 %. 🔒 — партия не участвует в автопересчёте. ⚑ — входит в коалицию. Δ — изменение мест к прошлым выборам. ●/○/⊘ — обычные / вакантные / внефракционные.',
+    'field.arc': 'Форма дуги (классическая)',
+    'tg.seatAuto': 'Авторазмер мандатов',
+    'field.seatSize': 'Размер мандатов',
+    'ui.auto': '(авто)',
+    'field.innerRadius': 'Внутренний радиус',
+    'field.seatShape': 'Форма мест',
+    'seatShape.circle': 'Круги',
+    'seatShape.square': 'Скруглённые квадраты',
+    'seatShape.sharp': 'Квадраты',
+    'hint.geometry': 'Настройки применяются к диаграмме любого типа. «Внутренний радиус» увеличивает пустоту в центре дуги (только для классической).',
+    'field.cardTitle': 'Заголовок',
+    'ph.cardTitle': 'Например: Национальное собрание',
+    'sub.titleSettings': 'Настройки заголовка',
+    'field.titleSize': 'Размер, px',
+    'field.titleLS': 'Letter-spacing, px',
+    'field.align': 'Выравнивание',
+    'align.left': 'Слева',
+    'align.center': 'По центру',
+    'align.right': 'Справа',
+    'field.titleStyle': 'Начертание',
+    'field.titlePadTop': 'Отступ сверху, px',
+    'field.titlePadBottom': 'Отступ снизу, px',
+    'field.titleColor': 'Цвет заголовка',
+    'tg.textShadow': 'Тень текста',
+    'tg.textStroke': 'Обводка текста',
+    'field.strokeWidth': 'Толщина обводки, px',
+    'sub.logo': 'Логотип / флаг / герб',
+    'upload.logo': 'Нажмите, чтобы загрузить изображение',
+    'btn.remove': 'Удалить',
+    'field.logoPos': 'Положение логотипа',
+    'logoPos.aboveLeft': 'Над заголовком — слева',
+    'logoPos.aboveCenter': 'Над заголовком — по центру',
+    'logoPos.aboveRight': 'Над заголовком — справа',
+    'logoPos.besideLeft': 'Слева от заголовка',
+    'logoPos.besideRight': 'Справа от заголовка',
+    'logoPos.manual': 'Свободное перемещение',
+    'field.offsetX': 'Смещение X',
+    'field.offsetY': 'Смещение Y',
+    'hint.logo': 'Пресеты положения логотипа задают жёсткую привязку к холсту. Перетаскивание мышкой автоматически переключает на «Свободное перемещение», а выбор пресета сбрасывает ручное смещение.',
+    'sub.presets': 'Шаблоны дизайна',
+    'sub.font': 'Шрифт',
+    'ph.font': 'Поиск шрифта…',
+    'sub.bg': 'Фон карточки',
+    'bg.solid': 'Сплошной цвет',
+    'bg.gradient': 'Градиент',
+    'bg.image': 'Своя картинка',
+    'bg.transparent': 'Прозрачный',
+    'field.bgColor': 'Цвет фона',
+    'label.from': 'От',
+    'label.to': 'До',
+    'label.angle': 'Угол',
+    'upload.bg': 'Загрузить фоновое изображение',
+    'sub.textColors': 'Цвета текста',
+    'label.text': 'Текст',
+    'label.accent': 'Акцент',
+    'sub.cardElements': 'Элементы карточки',
+    'tg.header': 'Шапка (лого + заголовок)',
+    'tg.count': 'Счётчик мест',
+    'tg.legend': 'Легенда партий',
+    'tg.coalFrame': 'Рамка коалиции',
+    'tg.majority': 'Порог большинства',
+    'field.majorityType': 'Тип порога',
+    'majority.simple': 'Простое большинство (50% + 1)',
+    'majority.qualified': 'Квалифицированное (3/5 = 60%)',
+    'majority.constitutional': 'Конституционное (2/3 ≈ 66.7%)',
+    'majority.custom': 'Своё значение',
+    'field.majoritySeats': 'Точное значение, мандатов',
+    'field.majorityLabel': 'Подпись на диаграмме',
+    'majority.auto': 'Авто',
+    'field.majorityColor': 'Цвет линии и подписи',
+    'tg.majorityOccupied': 'Считать только от занятых мест',
+    'hint.majority': 'Линия отображается только в классическом режиме диаграммы. Вакантные места (○) не учитываются при включённой опции выше.',
+    'sub.footer': 'Подвал карточки',
+    'field.footer': 'Источник / примечание',
+    'ph.footer': 'Источник: ЦИК, 2026',
+    'field.coalRadius': 'Скругление, px',
+    'field.coalWidth': 'Толщина рамки, px',
+    'sub.coalStroke': 'Обводка коалиционных мест',
+    'field.coalStrokeWidth': 'Толщина обводки',
+    'field.coalStrokeColor': 'Цвет обводки',
+    'hint.coalition': 'Пресеты выравнивания задают абсолютное положение рамки на холсте (слева / по центру / справа) и сбрасывают ручное смещение. Перетаскивание рамки мышкой добавляет смещение поверх выбранного пресета. Обводка мест применяется ко всем местам партий с флагом ⚑ (при 0 — обводка отключена).',
+    'ph.tplName': 'Название шаблона',
+    'btn.support': '☕ Поддержать проект',
+    'btn.save': 'Сохранить',
+    'hint.templates': 'Шаблоны хранятся в этом браузере (localStorage). Для переноса на другой компьютер используйте кнопки ↓ JSON / ↑ JSON в верхней панели.',
+    'tpl.empty': 'Пока нет сохранённых шаблонов.',
+    'chart.classic': 'Классическая',
+    'chart.westminster': 'Вестминстерская',
+    'party.color': 'Цвет партии',
+    'party.coal': 'В коалицию',
+    'party.lock': 'Заблокировать долю',
+    'party.del': 'Удалить',
+    'party.deltaPh': 'Δ изм.',
+    'party.deltaTitle': 'Изменение к прошлым выборам (+12 / -5)',
+    'party.statusNormal': 'Обычные',
+    'party.statusVacant': 'Вакантные (полый контур)',
+    'party.statusIndependent': 'Внефракционные (в конце диаграммы)',
+    'party.new': 'Партия',
+    'font.empty': 'Ничего не найдено',
+    'preset.official': 'Официальный',
+    'preset.broadcast': 'Тёмный эфирный',
+    'preset.retro': 'Газетный ретро',
+    'preset.minimal': 'Минимализм',
+    'preset.neon': 'Неон',
+    'toast.png': 'PNG сохранён (×{s})',
+    'toast.svg': 'SVG сохранён',
+    'toast.json': 'JSON сохранён',
+    'toast.storage': 'Не удалось сохранить: хранилище переполнено',
+    'toast.tplSaved': 'Шаблон «{name}» сохранён',
+    'toast.tplLoaded': 'Шаблон «{name}» загружен',
+    'toast.fileLoaded': 'Шаблон загружен из файла',
+    'toast.badJson': 'Ошибка: неверный JSON',
+    'toast.untitled': 'Без названия'
+  },
+  en: {
+    'doc.title': 'Parliament Studio — parliament diagram builder',
+    'brand.sub': 'parliament diagrams',
+    'ui.lang': 'Interface language',
+    'sec.parliament': 'Parliament',
+    'sec.parties': 'Parties',
+    'sec.geometry': 'Diagram geometry',
+    'sec.header': 'Card header',
+    'sec.style': 'Styling',
+    'sec.coalition': 'Coalition frame',
+    'sec.templates': 'Country templates',
+    'field.totalSeats': 'Total seats',
+    'field.sortMode': 'Order in legend and diagram',
+    'sort.seatsDesc': 'By seats — descending',
+    'sort.seatsAsc': 'By seats — ascending',
+    'sort.name': 'Alphabetically',
+    'sort.manual': 'Manually (list order)',
+    'btn.addParty': '+ Add party',
+    'hint.parties': 'Shares always sum to 100 %. 🔒 — party excluded from auto-recalculation. ⚑ — part of the coalition. Δ — seat change vs the previous election. ●/○/⊘ — regular / vacant / independent.',
+    'field.arc': 'Arc shape (classic)',
+    'tg.seatAuto': 'Auto seat size',
+    'field.seatSize': 'Seat size',
+    'ui.auto': '(auto)',
+    'field.innerRadius': 'Inner radius',
+    'field.seatShape': 'Seat shape',
+    'seatShape.circle': 'Circles',
+    'seatShape.square': 'Rounded squares',
+    'seatShape.sharp': 'Squares',
+    'hint.geometry': 'Settings apply to diagrams of any type. “Inner radius” increases the empty space in the arc center (classic only).',
+    'field.cardTitle': 'Title',
+    'ph.cardTitle': 'E.g.: National Assembly',
+    'sub.titleSettings': 'Title settings',
+    'field.titleSize': 'Size, px',
+    'field.titleLS': 'Letter-spacing, px',
+    'field.align': 'Alignment',
+    'align.left': 'Left',
+    'align.center': 'Center',
+    'align.right': 'Right',
+    'field.titleStyle': 'Font style',
+    'field.titlePadTop': 'Padding top, px',
+    'field.titlePadBottom': 'Padding bottom, px',
+    'field.titleColor': 'Title color',
+    'tg.textShadow': 'Text shadow',
+    'tg.textStroke': 'Text outline',
+    'field.strokeWidth': 'Outline width, px',
+    'sub.logo': 'Logo / flag / emblem',
+    'upload.logo': 'Click to upload an image',
+    'btn.remove': 'Remove',
+    'field.logoPos': 'Logo position',
+    'logoPos.aboveLeft': 'Above title — left',
+    'logoPos.aboveCenter': 'Above title — center',
+    'logoPos.aboveRight': 'Above title — right',
+    'logoPos.besideLeft': 'Left of title',
+    'logoPos.besideRight': 'Right of title',
+    'logoPos.manual': 'Free placement',
+    'field.offsetX': 'Offset X',
+    'field.offsetY': 'Offset Y',
+    'hint.logo': 'Logo position presets snap the logo to the canvas. Dragging it with the mouse automatically switches to “Free placement”, and choosing a preset resets the manual offset.',
+    'sub.presets': 'Design templates',
+    'sub.font': 'Font',
+    'ph.font': 'Search font…',
+    'sub.bg': 'Card background',
+    'bg.solid': 'Solid color',
+    'bg.gradient': 'Gradient',
+    'bg.image': 'Custom image',
+    'bg.transparent': 'Transparent',
+    'field.bgColor': 'Background color',
+    'label.from': 'From',
+    'label.to': 'To',
+    'label.angle': 'Angle',
+    'upload.bg': 'Upload background image',
+    'sub.textColors': 'Text colors',
+    'label.text': 'Text',
+    'label.accent': 'Accent',
+    'sub.cardElements': 'Card elements',
+    'tg.header': 'Header (logo + title)',
+    'tg.count': 'Seat counter',
+    'tg.legend': 'Party legend',
+    'tg.coalFrame': 'Coalition frame',
+    'tg.majority': 'Majority threshold',
+    'field.majorityType': 'Threshold type',
+    'majority.simple': 'Simple majority (50% + 1)',
+    'majority.qualified': 'Qualified (3/5 = 60%)',
+    'majority.constitutional': 'Constitutional (2/3 ≈ 66.7%)',
+    'majority.custom': 'Custom value',
+    'field.majoritySeats': 'Exact value, seats',
+    'field.majorityLabel': 'Label on diagram',
+    'majority.auto': 'Auto',
+    'field.majorityColor': 'Line and label color',
+    'tg.majorityOccupied': 'Count only occupied seats',
+    'hint.majority': 'The line is shown only in the classic diagram mode. Vacant seats (○) are excluded when the option above is enabled.',
+    'sub.footer': 'Card footer',
+    'field.footer': 'Source / note',
+    'ph.footer': 'Source: CEC, 2026',
+    'field.coalRadius': 'Corner radius, px',
+    'field.coalWidth': 'Frame width, px',
+    'sub.coalStroke': 'Coalition seat outline',
+    'field.coalStrokeWidth': 'Outline width',
+    'field.coalStrokeColor': 'Outline color',
+    'hint.coalition': 'Alignment presets set the absolute frame position on the canvas (left / center / right) and reset the manual offset. Dragging the frame adds an offset on top of the chosen preset. The seat outline applies to all seats of parties with the ⚑ flag (0 disables the outline).',
+    'ph.tplName': 'Template name',
+    'btn.support': '☕ Support the project',
+    'btn.save': 'Save',
+    'hint.templates': 'Templates are stored in this browser (localStorage). To move them to another computer, use the ↓ JSON / ↑ JSON buttons in the top bar.',
+    'tpl.empty': 'No saved templates yet.',
+    'chart.classic': 'Classic',
+    'chart.westminster': 'Westminster',
+    'party.color': 'Party color',
+    'party.coal': 'To coalition',
+    'party.lock': 'Lock share',
+    'party.del': 'Delete',
+    'party.deltaPh': 'Δ change',
+    'party.deltaTitle': 'Change vs the previous election (+12 / -5)',
+    'party.statusNormal': 'Regular',
+    'party.statusVacant': 'Vacant (hollow outline)',
+    'party.statusIndependent': 'Independent (at the end of the diagram)',
+    'party.new': 'Party',
+    'font.empty': 'Nothing found',
+    'preset.official': 'Official',
+    'preset.broadcast': 'Dark broadcast',
+    'preset.retro': 'Newspaper retro',
+    'preset.minimal': 'Minimalism',
+    'preset.neon': 'Neon',
+    'toast.png': 'PNG saved (×{s})',
+    'toast.svg': 'SVG saved',
+    'toast.json': 'JSON saved',
+    'toast.storage': 'Could not save: storage is full',
+    'toast.tplSaved': 'Template “{name}” saved',
+    'toast.tplLoaded': 'Template “{name}” loaded',
+    'toast.fileLoaded': 'Template loaded from file',
+    'toast.badJson': 'Error: invalid JSON',
+    'toast.untitled': 'Untitled'
+  },
+  fr: {
+    'doc.title': 'Parliament Studio — créateur de diagrammes parlementaires',
+    'brand.sub': 'diagrammes parlementaires',
+    'ui.lang': "Langue de l'interface",
+    'sec.parliament': 'Parlement',
+    'sec.parties': 'Partis',
+    'sec.geometry': 'Géométrie du diagramme',
+    'sec.header': 'En-tête de la carte',
+    'sec.style': 'Apparence',
+    'sec.coalition': 'Cadre de coalition',
+    'sec.templates': 'Modèles de pays',
+    'field.totalSeats': 'Nombre total de sièges',
+    'field.sortMode': 'Ordre dans la légende et le diagramme',
+    'sort.seatsDesc': 'Par sièges — décroissant',
+    'sort.seatsAsc': 'Par sièges — croissant',
+    'sort.name': 'Alphabétique',
+    'sort.manual': 'Manuel (ordre de la liste)',
+    'btn.addParty': '+ Ajouter un parti',
+    'hint.parties': 'La somme des parts fait toujours 100 %. 🔒 — parti exclu du recalcul automatique. ⚑ — membre de la coalition. Δ — évolution des sièges depuis les dernières élections. ●/○/⊘ — ordinaires / vacants / indépendants.',
+    'field.arc': "Forme de l'arc (classique)",
+    'tg.seatAuto': 'Taille automatique des sièges',
+    'field.seatSize': 'Taille des sièges',
+    'ui.auto': '(auto)',
+    'field.innerRadius': 'Rayon interne',
+    'field.seatShape': 'Forme des sièges',
+    'seatShape.circle': 'Cercles',
+    'seatShape.square': 'Carrés arrondis',
+    'seatShape.sharp': 'Carrés',
+    'hint.geometry': "Les réglages s'appliquent aux diagrammes de tout type. « Rayon interne » agrandit le vide au centre de l'arc (classique uniquement).",
+    'field.cardTitle': 'Titre',
+    'ph.cardTitle': 'Ex. : Assemblée nationale',
+    'sub.titleSettings': 'Réglages du titre',
+    'field.titleSize': 'Taille, px',
+    'field.titleLS': 'Espacement des lettres, px',
+    'field.align': 'Alignement',
+    'align.left': 'Gauche',
+    'align.center': 'Centre',
+    'align.right': 'Droite',
+    'field.titleStyle': 'Style',
+    'field.titlePadTop': 'Marge haute, px',
+    'field.titlePadBottom': 'Marge basse, px',
+    'field.titleColor': 'Couleur du titre',
+    'tg.textShadow': 'Ombre du texte',
+    'tg.textStroke': 'Contour du texte',
+    'field.strokeWidth': 'Épaisseur du contour, px',
+    'sub.logo': 'Logo / drapeau / armoiries',
+    'upload.logo': 'Cliquez pour charger une image',
+    'btn.remove': 'Supprimer',
+    'field.logoPos': 'Position du logo',
+    'logoPos.aboveLeft': 'Au-dessus du titre — gauche',
+    'logoPos.aboveCenter': 'Au-dessus du titre — centre',
+    'logoPos.aboveRight': 'Au-dessus du titre — droite',
+    'logoPos.besideLeft': 'À gauche du titre',
+    'logoPos.besideRight': 'À droite du titre',
+    'logoPos.manual': 'Placement libre',
+    'field.offsetX': 'Décalage X',
+    'field.offsetY': 'Décalage Y',
+    'hint.logo': 'Les préréglages de position ancrent le logo au canevas. Le glisser à la souris bascule automatiquement sur « Placement libre » ; choisir un préréglage réinitialise le décalage manuel.',
+    'sub.presets': 'Modèles de design',
+    'sub.font': 'Police',
+    'ph.font': 'Rechercher une police…',
+    'sub.bg': 'Fond de la carte',
+    'bg.solid': 'Couleur unie',
+    'bg.gradient': 'Dégradé',
+    'bg.image': 'Image personnalisée',
+    'bg.transparent': 'Transparent',
+    'field.bgColor': 'Couleur du fond',
+    'label.from': 'De',
+    'label.to': 'À',
+    'label.angle': 'Angle',
+    'upload.bg': 'Charger une image de fond',
+    'sub.textColors': 'Couleurs du texte',
+    'label.text': 'Texte',
+    'label.accent': 'Accent',
+    'sub.cardElements': 'Éléments de la carte',
+    'tg.header': 'En-tête (logo + titre)',
+    'tg.count': 'Compteur de sièges',
+    'tg.legend': 'Légende des partis',
+    'tg.coalFrame': 'Cadre de coalition',
+    'tg.majority': 'Seuil de majorité',
+    'field.majorityType': 'Type de seuil',
+    'majority.simple': 'Majorité simple (50 % + 1)',
+    'majority.qualified': 'Qualifiée (3/5 = 60 %)',
+    'majority.constitutional': 'Constitutionnelle (2/3 ≈ 66,7 %)',
+    'majority.custom': 'Valeur personnalisée',
+    'field.majoritySeats': 'Valeur exacte, sièges',
+    'field.majorityLabel': 'Libellé sur le diagramme',
+    'majority.auto': 'Auto',
+    'field.majorityColor': 'Couleur de la ligne et du libellé',
+    'tg.majorityOccupied': 'Compter seulement les sièges occupés',
+    'hint.majority': "La ligne n'apparaît qu'en mode classique du diagramme. Les sièges vacants (○) sont exclus lorsque l'option ci-dessus est activée.",
+    'sub.footer': 'Pied de carte',
+    'field.footer': 'Source / note',
+    'ph.footer': 'Source : commission électorale, 2026',
+    'field.coalRadius': 'Arrondi, px',
+    'field.coalWidth': 'Épaisseur du cadre, px',
+    'sub.coalStroke': 'Contour des sièges de coalition',
+    'field.coalStrokeWidth': 'Épaisseur du contour',
+    'field.coalStrokeColor': 'Couleur du contour',
+    'hint.coalition': "Les préréglages d'alignement fixent la position absolue du cadre sur le canevas (gauche / centre / droite) et réinitialisent le décalage manuel. Glisser le cadre ajoute un décalage au préréglage choisi. Le contour s'applique à tous les sièges des partis avec le drapeau ⚑ (0 désactive le contour).",
+    'ph.tplName': 'Nom du modèle',
+    'btn.support': '☕ Soutenir le projet',
+    'btn.save': 'Enregistrer',
+    'hint.templates': 'Les modèles sont stockés dans ce navigateur (localStorage). Pour les transférer sur un autre ordinateur, utilisez les boutons ↓ JSON / ↑ JSON de la barre supérieure.',
+    'tpl.empty': 'Aucun modèle enregistré pour le moment.',
+    'chart.classic': 'Classique',
+    'chart.westminster': 'Westminster',
+    'party.color': 'Couleur du parti',
+    'party.coal': 'Dans la coalition',
+    'party.lock': 'Verrouiller la part',
+    'party.del': 'Supprimer',
+    'party.deltaPh': 'Δ écart',
+    'party.deltaTitle': 'Évolution depuis les dernières élections (+12 / -5)',
+    'party.statusNormal': 'Ordinaires',
+    'party.statusVacant': 'Vacants (contour creux)',
+    'party.statusIndependent': 'Indépendants (en fin de diagramme)',
+    'party.new': 'Parti',
+    'font.empty': 'Rien trouvé',
+    'preset.official': 'Officiel',
+    'preset.broadcast': 'Diffusion sombre',
+    'preset.retro': 'Rétro journal',
+    'preset.minimal': 'Minimalisme',
+    'preset.neon': 'Néon',
+    'toast.png': 'PNG enregistré (×{s})',
+    'toast.svg': 'SVG enregistré',
+    'toast.json': 'JSON enregistré',
+    'toast.storage': "Échec de l'enregistrement : stockage saturé",
+    'toast.tplSaved': 'Modèle « {name} » enregistré',
+    'toast.tplLoaded': 'Modèle « {name} » chargé',
+    'toast.fileLoaded': 'Modèle chargé depuis le fichier',
+    'toast.badJson': 'Erreur : JSON invalide',
+    'toast.untitled': 'Sans titre'
+  }
+};
+
+function uiT(key, params) {
+  const dict = UI_I18N[getLang()] || UI_I18N.ru;
+  let s = dict[key];
+  if (s == null) s = UI_I18N.ru[key];
+  if (s == null) return null;
+  if (params) {
+    for (const k of Object.keys(params)) s = s.split('{' + k + '}').join(params[k]);
+  }
+  return s;
+}
+
+function applyUILanguage() {
+  const lang = getLang();
+  document.documentElement.lang = (lang === 'fr' ? 'fr' : lang === 'en' ? 'en' : 'ru');
+  $$('[data-i18n]').forEach(el => {
+    const v = uiT(el.getAttribute('data-i18n'));
+    if (v != null) el.textContent = v;
+  });
+  $$('[data-i18n-title]').forEach(el => {
+    const v = uiT(el.getAttribute('data-i18n-title'));
+    if (v != null) el.title = v;
+  });
+  $$('[data-i18n-ph]').forEach(el => {
+    const v = uiT(el.getAttribute('data-i18n-ph'));
+    if (v != null) el.placeholder = v;
+  });
+}
+
+function applyLanguageAll() {
+  syncLangUI();
+  applyUILanguage();
+  renderPartyList();
+  renderPresets();
+  renderTemplates();
+  syncPartyUI();
+  syncChartTypeUI();
+  syncMajorityUI();
+  render();
+}
+
+const measureCanvas = document.createElement('canvas');
+const mctx = measureCanvas.getContext('2d');
+function setFont(ctx, weight, size, family, style = '') {
+  ctx.font = `${style}${weight} ${size}px "${family}", "Segoe UI", Roboto, sans-serif`;
+}
+function wrapLines(ctx, text, maxW) {
+  const words = String(text).split(/\s+/).filter(Boolean);
+  const lines = []; let cur = '';
+  for (const w of words) {
+    const test = cur ? cur + ' ' + w : w;
+    if (ctx.measureText(test).width <= maxW || !cur) cur = test;
+    else { lines.push(cur); cur = w; }
+  }
+  if (cur) lines.push(cur);
+  return lines.length ? lines : [''];
+}
+function truncate(ctx, text, maxW) {
+  if (ctx.measureText(text).width <= maxW) return text;
+  let s = String(text);
+  while (s.length > 1 && ctx.measureText(s + '…').width > maxW) s = s.slice(0, -1);
+  return s + '…';
+}
+function rrPath(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  r = Math.max(0, r);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function gradientPoints(angleDeg, W, H) {
+  const a = (angleDeg - 90) * Math.PI / 180;
+  const cx = W / 2, cy = H / 2;
+  const len = Math.abs(W * Math.cos(a)) + Math.abs(H * Math.sin(a));
+  const dx = Math.cos(a) * len / 2, dy = Math.sin(a) * len / 2;
+  return { x1: cx - dx, y1: cy - dy, x2: cx + dx, y2: cy + dy };
+}
+function insideRect(px, py, r) {
+  return px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h;
+}
+function withLetterSpacing(ctx, px, fn) {
+  let old = null;
+  try { old = ctx.letterSpacing; ctx.letterSpacing = (px || 0) + 'px'; } catch (e) {}
+  try { fn(); } finally {
+    try { ctx.letterSpacing = old == null ? '0px' : old; } catch (e) {}
+  }
+}
+
+/* =========================================================
+   1b. ЦВЕТ: парсинг / конвертации
+   ========================================================= */
+function parseColor(c) {
+  c = String(c == null ? '' : c).trim();
+  if (!c) return { r: 0, g: 0, b: 0, a: 1 };
+
+  let hex = c[0] === '#' ? c.slice(1) : c;
+  if (/^[0-9a-fA-F]+$/.test(hex) && [3, 4, 6, 8].includes(hex.length)) {
+    if (hex.length === 3 || hex.length === 4) {
+      hex = hex.split('').map(x => x + x).join('');
+    }
+    if (hex.length === 6) {
+      return {
+        r: parseInt(hex.slice(0,2),16),
+        g: parseInt(hex.slice(2,4),16),
+        b: parseInt(hex.slice(4,6),16),
+        a: 1
+      };
+    }
+    if (hex.length === 8) {
+      return {
+        r: parseInt(hex.slice(0,2),16),
+        g: parseInt(hex.slice(2,4),16),
+        b: parseInt(hex.slice(4,6),16),
+        a: parseInt(hex.slice(6,8),16) / 255
+      };
+    }
+  }
+
+  const m = c.match(/rgba?\(([^)]+)\)/i);
+  if (m) {
+    const p = m[1].split(',').map(x => parseFloat(x));
+    return { r: p[0] || 0, g: p[1] || 0, b: p[2] || 0, a: p.length > 3 ? clamp(p[3], 0, 1) : 1 };
+  }
+  return { r: 0, g: 0, b: 0, a: 1 };
+}
+function rgbToHsv(rgb) {
+  let r = rgb.r / 255, g = rgb.g / 255, b = rgb.b / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+  let h = 0;
+  if (d) {
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60; if (h < 0) h += 360;
+  }
+  return { h, s: max ? d / max : 0, v: max };
+}
+function hsvToRgb(h, s, v) {
+  h = ((h % 360) + 360) % 360;
+  const c = v * s;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = v - c;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) { r = c; g = x; }
+  else if (h < 120) { r = x; g = c; }
+  else if (h < 180) { g = c; b = x; }
+  else if (h < 240) { g = x; b = c; }
+  else if (h < 300) { r = x; b = c; }
+  else { r = c; b = x; }
+  return { r: Math.round((r + m) * 255), g: Math.round((g + m) * 255), b: Math.round((b + m) * 255) };
+}
+function toHex(rgb) {
+  const h = x => clamp(Math.round(x), 0, 255).toString(16).padStart(2, '0');
+  return '#' + h(rgb.r) + h(rgb.g) + h(rgb.b);
+}
+function toHex8(rgb, a) {
+  let s = toHex(rgb);
+  if (a != null && a < 1) s += clamp(Math.round(a * 255), 0, 255).toString(16).padStart(2, '0');
+  return s;
+}
+function toCss(rgb, a) {
+  if (a == null || a >= 1) return toHex(rgb);
+  return `rgba(${Math.round(rgb.r)},${Math.round(rgb.g)},${Math.round(rgb.b)},${Math.round(a * 1000) / 1000})`;
+}
+
+/* =========================================================
+   2. МАТЕМАТИКА ДИАГРАММЫ
+   ========================================================= */
+function computeSeatLayout(n, opts = {}) {
+  const arcDeg = opts.arcDegrees || 180;
+  const arcRad = arcDeg * Math.PI / 180;
+  const innerExtend = clamp(opts.innerExtend || 0, 0, 2);
+
+  n = Math.max(1, Math.round(n));
+  const DR = 2.2;
+  const TARGET = 2.2;
+  let R = Math.max(1, Math.round(Math.sqrt(n) / 2));
+  R = Math.min(R, 40);
+
+  const S = TARGET * n / arcRad;
+  const extra = DR * R * (R - 1) / 2;
+  let r0 = (S - extra) / R;
+  const minR0 = DR * 0.95;
+  if (!isFinite(r0) || r0 < minR0) r0 = minR0;
+
+  const r0base = r0;
+  r0 = r0base * (1 + innerExtend);
+
+  const radii = [];
+  for (let i = 0; i < R; i++) radii.push(r0 + i * DR);
+  const sumR = radii.reduce((a, b) => a + b, 0);
+
+  let counts = radii.map(r => Math.max(0, Math.round(n * r / sumR)));
+  let total = counts.reduce((a, b) => a + b, 0);
+  let guard = 0;
+  while (total !== n && guard++ < 5000) {
+    if (total < n) {
+      let best = 0, bestScore = -Infinity;
+      for (let i = 0; i < R; i++) {
+        const cap = Math.floor(arcRad * radii[i] / TARGET);
+        const score = cap - counts[i];
+        if (score > bestScore) { bestScore = score; best = i; }
+      }
+      counts[best]++; total++;
+    } else {
+      let best = -1, bestScore = -Infinity;
+      for (let i = 0; i < R; i++) {
+        if (counts[i] <= 1) continue;
+        if (counts[i] > bestScore) { bestScore = counts[i]; best = i; }
+      }
+      if (best < 0) break;
+      counts[best]--; total--;
+    }
+  }
+
+  const startAngle = Math.PI / 2 + arcRad / 2;
+  const isFullCircle = arcRad >= 2 * Math.PI - 0.001;
+
+  const seats = [];
+  for (let i = 0; i < R; i++) {
+    const cnt = counts[i], r = radii[i];
+    const divisor = isFullCircle ? Math.max(1, cnt) : Math.max(1, cnt - 1);
+    for (let j = 0; j < cnt; j++) {
+      const a = cnt === 1 ? Math.PI / 2 : startAngle - arcRad * j / divisor;
+      seats.push({ x: r * Math.cos(a), y: -r * Math.sin(a), a, r });
+    }
+  }
+  seats.sort((p, q) => (q.a - p.a) || (p.r - q.r));
+
+  const seatPad = TARGET * 0.6;
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const s of seats) {
+    minX = Math.min(minX, s.x - seatPad);
+    maxX = Math.max(maxX, s.x + seatPad);
+    minY = Math.min(minY, s.y - seatPad);
+    maxY = Math.max(maxY, s.y + seatPad);
+  }
+
+  const outerR = radii[R - 1] + 1;
+
+  return {
+    seats,
+    outerR,
+    innerR: r0,
+    bbox: { minX, maxX, minY, maxY },
+    width: maxX - minX,
+    height: maxY - minY,
+    rows: R,
+    arcRad,
+    startAngle,
+    isFullCircle,
+    isWestminster: false
+  };
+}
+
+function computeWestminsterLayout(n, coalitionSeats, opts = {}) {
+  n = Math.max(1, Math.round(n));
+  let leftCount, rightCount;
+  if (coalitionSeats > 0 && coalitionSeats < n) {
+    leftCount = coalitionSeats;
+    rightCount = n - coalitionSeats;
+  } else {
+    leftCount = Math.ceil(n / 2);
+    rightCount = n - leftCount;
+  }
+
+  function gridFor(count) {
+    if (count <= 0) return { rows: 0, cols: 0 };
+    const rows = Math.max(1, Math.round(Math.sqrt(count / 2.5)));
+    const cols = Math.ceil(count / rows);
+    return { rows, cols };
+  }
+
+  const leftGrid = gridFor(leftCount);
+  const rightGrid = gridFor(rightCount);
+
+  const rowSpacing = 2.6;
+  const colSpacing = 2.4;
+  const aisleW = 4.2;
+
+  const leftW = leftGrid.cols * colSpacing;
+  const rightW = rightGrid.cols * colSpacing;
+
+  const seats = [];
+
+  let placed = 0;
+  for (let row = 0; row < leftGrid.rows && placed < leftCount; row++) {
+    const y = -row * rowSpacing;
+    for (let col = 0; col < leftGrid.cols && placed < leftCount; col++) {
+      const x = -aisleW/2 - (col + 0.5) * colSpacing;
+      seats.push({ x, y, a: 0, r: 0 });
+      placed++;
+    }
+  }
+
+  placed = 0;
+  for (let row = 0; row < rightGrid.rows && placed < rightCount; row++) {
+    const y = -row * rowSpacing;
+    for (let col = 0; col < rightGrid.cols && placed < rightCount; col++) {
+      const x = aisleW/2 + (col + 0.5) * colSpacing;
+      seats.push({ x, y, a: 0, r: 0 });
+      placed++;
+    }
+  }
+
+  const pad = Math.max(colSpacing, rowSpacing) * 0.7;
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const s of seats) {
+    minX = Math.min(minX, s.x - pad);
+    maxX = Math.max(maxX, s.x + pad);
+    minY = Math.min(minY, s.y - pad);
+    maxY = Math.max(maxY, s.y + pad);
+  }
+
+  const totalW = (leftW + aisleW + rightW);
+
+  return {
+    seats,
+    bbox: { minX, maxX, minY, maxY },
+    width: maxX - minX,
+    height: maxY - minY,
+    rows: Math.max(leftGrid.rows, rightGrid.rows),
+    leftCount,
+    rightCount,
+    outerR: totalW / 2,
+    innerR: aisleW / 2,
+    rowSpacing, colSpacing, aisleW,
+    isWestminster: true
+  };
+}
+
+/* =========================================================
+   3. ПРЕСЕТЫ
+   ========================================================= */
+const PRESETS = {
+  official: {
+    label: 'Официальный', font: 'PT Sans',
+    bgType: 'solid', bg1: '#ffffff', bg2: '#e8eef7', bgAngle: 135,
+    text: '#0f172a', muted: '#64748b', accent: '#1d4ed8', cardRadius: 26
+  },
+  broadcast: {
+    label: 'Тёмный эфирный', font: 'Montserrat',
+    bgType: 'gradient', bg1: '#0b1220', bg2: '#1e293b', bgAngle: 160,
+    text: '#f8fafc', muted: '#94a3b8', accent: '#38bdf8', cardRadius: 26
+  },
+  retro: {
+    label: 'Газетный ретро', font: 'Playfair Display',
+    bgType: 'solid', bg1: '#f6f1e7', bg2: '#e7dcc8', bgAngle: 135,
+    text: '#2b2118', muted: '#7a6a58', accent: '#8b1e1e', cardRadius: 4
+  },
+  minimal: {
+    label: 'Минимализм', font: 'Inter',
+    bgType: 'solid', bg1: '#ffffff', bg2: '#ffffff', bgAngle: 135,
+    text: '#111111', muted: '#8a8a8a', accent: '#111111', cardRadius: 0
+  },
+  neon: {
+    label: 'Неон', font: 'Unbounded',
+    bgType: 'gradient', bg1: '#1a0b2e', bg2: '#0d1b2a', bgAngle: 200,
+    text: '#ede9fe', muted: '#a78bfa', accent: '#22d3ee', cardRadius: 32
+  }
+};
+
+const FONTS = [
+  "Roboto","Roboto Condensed","Roboto Slab","Roboto Mono","Roboto Flex","Open Sans",
+  "Lato","Montserrat","Montserrat Alternates","Oswald","Raleway","PT Sans",
+  "PT Sans Narrow","PT Sans Caption","PT Serif","PT Serif Caption","PT Mono",
+  "Noto Sans","Noto Serif","Noto Sans Display","Noto Serif Display","Playfair Display",
+  "Merriweather","Inter","Manrope","Rubik","Rubik Mono One","Nunito","Nunito Sans",
+  "Work Sans","Barlow","Barlow Condensed","Barlow Semi Condensed","Cormorant",
+  "Cormorant Garamond","Cormorant Unicase","Cormorant Infant","Fira Sans",
+  "Fira Sans Condensed","Fira Mono","IBM Plex Sans","IBM Plex Serif","IBM Plex Mono",
+  "Source Sans 3","Source Serif 4","Exo 2","Jost","Karla","Mulish","Comfortaa",
+  "Caveat","Marck Script","Lobster","Bad Script","Russo One","Yeseva One","Philosopher",
+  "Alegreya","Alegreya Sans","Alegreya Sans SC","Old Standard TT","Vollkorn","Spectral",
+  "Bitter","Arimo","Tinos","Cousine","Cuprum","Economica","Jura","Kelly Slab","Kreon",
+  "Ledger","Literata","Overpass","Overpass Mono","Piazzolla","Podkova","Prata","Rufina",
+  "Scada","Seymour One","Shantell Sans","Sofia Sans","Sofia Sans Condensed","STIX Two Text",
+  "Ubuntu","Ubuntu Condensed","Ubuntu Mono","Unbounded","Varta","Play","Forum","Gabriela",
+  "Golos Text","Onest","Tenor Sans","Andika","El Messiri","Commissioner","Geologica",
+  "Wix Madefor Display","Wix Madefor Text","Cabin","Yanone Kaffeesatz","Marmelad",
+  "Ruslan Display","Oranienbaum","Neucha","Pangolin","Istok Web","Ruda","Ruda Condensed",
+  "Advent Pro","Andada Pro","Bellota Text","Viaoda Libre","Alumni Sans","Anek Latin",
+  "Bricolage Grotesque","Fira Code","Inter Tight","Kode Mono","Lexend","Reddit Sans",
+  "Schibsted Grotesk","Sofia Sans Extra Condensed","Spline Sans","Young Serif","Playfair",
+  "Noto Sans Mono"
+];
+
+const _fontLoaded = new Set();
+const _fontLoading = new Set();
+const _fontQueue = new Set();
+let _fontFlushTimer = null;
+
+function queueFont(family) {
+  if (!family) return;
+  if (_fontLoaded.has(family) || _fontLoading.has(family) || _fontQueue.has(family)) return;
+  _fontQueue.add(family);
+  if (!_fontFlushTimer) _fontFlushTimer = setTimeout(flushFontQueue, 40);
+}
+
+function flushFontQueue() {
+  _fontFlushTimer = null;
+  const batch = Array.from(_fontQueue).slice(0, 8);
+  batch.forEach(f => _fontQueue.delete(f));
+  if (!batch.length) return;
+  const href = 'https://fonts.googleapis.com/css2?' +
+    batch.map(f => 'family=' + f.replace(/ /g, '+')).join('&') + '&display=swap';
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = href;
+  document.head.appendChild(link);
+  batch.forEach(f => _fontLoading.add(f));
+  link.onload = () => {
+    batch.forEach(f => { _fontLoading.delete(f); _fontLoaded.add(f); });
+    if (document.fonts && document.fonts.load) {
+      Promise.all(batch.map(f => document.fonts.load(`700 32px "${f}"`)))
+        .then(() => { render(); })
+        .catch(() => {});
+    }
+  };
+  link.onerror = () => { batch.forEach(f => _fontLoading.delete(f)); };
+  if (_fontQueue.size) _fontFlushTimer = setTimeout(flushFontQueue, 40);
+}
+
+function ensureFont(family) { queueFont(family); }
+
+/* =========================================================
+   4. СОСТОЯНИЕ
+   ========================================================= */
+const PALETTE = ['#3a86ff','#ff006e','#06d6a0','#ffb703','#8338ec',
+                 '#e63946','#118ab2','#fb8500','#2a9d8f','#9b5de5'];
+
+const DEFAULT_DESIGN = {
+  preset: 'official', font: 'PT Sans',
+  lang: 'ru',
+  bgType: 'solid', bg1: '#ffffff', bg2: '#e8eef7', bgAngle: 135,
+  bgImage: null,
+  text: '#0f172a', muted: '#64748b', accent: '#1d4ed8', cardRadius: 26,
+  showHeader: true, showCount: true, showLegend: true, showCoalition: true,
+  showMajority: false,
+  /* majority threshold */
+  majorityPreset: 'simple',
+  majoritySeats: 0,
+  majorityLabel: '',
+  majorityColor: '',
+  majorityOnlyOccupied: false,
+  footerText: '',
+  /* chart type / geometry */
+  chartType: 'classic',
+  arcDegrees: 180,
+  seatAutoSize: true,
+  seatSizeFactor: 0.85,
+  innerRadius: 0,
+  seatShape: 'circle',
+  /* coalition */
+  coalRadius: 18,
+  coalWidth: 2.5,
+  coalAlign: 'center',
+  coalOffsetX: 0,
+  coalOffsetY: 0,
+  coalSeatStrokeWidth: 1.5,
+  coalSeatStrokeColor: '',
+  /* logo */
+  logoPos: 'above-center',
+  logoOffsetX: 0,
+  logoOffsetY: 0,
+  /* title */
+  titleSize: 62,
+  titleAlign: 'center',
+  titleBold: true,
+  titleItalic: false,
+  titleUnderline: false,
+  titleUpper: false,
+  titleLetterSpacing: 0,
+  titleColor: '',
+  titlePadTop: 0,
+  titlePadBottom: 0,
+  titleShadow: false,
+  titleStroke: false,
+  titleStrokeWidth: 2
+};
+
+let state = {
+  title: 'Национальное собрание',
+  logo: null, logoW: 0, logoH: 0,
+  totalSeats: 450,
+  sortMode: 'seats-desc',
+  parties: [],
+  design: Object.assign({}, DEFAULT_DESIGN)
+};
+
+let logoImg = null, bgImg = null;
+let currentLayout = null;
+
+function makeDefaultParties() {
+  const defs = [
+    { name: 'Партия А', color: PALETTE[0], pct: 36 },
+    { name: 'Партия Б', color: PALETTE[1], pct: 28 },
+    { name: 'Партия В', color: PALETTE[2], pct: 16 },
+    { name: 'Партия Г', color: PALETTE[3], pct: 12 },
+    { name: 'Партия Д', color: PALETTE[4], pct: 8 }
+  ];
+  return defs.map(d => ({
+    id: uid(), name: d.name, color: d.color, pct: d.pct,
+    locked: false, coalition: false, seats: 0,
+    delta: 0, status: 'normal'
+  }));
+}
+
+/* =========================================================
+   5. РАСЧЁТ МЕСТ
+   ========================================================= */
+function recomputeSeats() {
+  const n = Math.max(1, Math.round(Number(state.totalSeats) || 1));
+  const ps = state.parties;
+  if (!ps.length) return;
+  const raw = ps.map(p => Math.max(0, p.pct) * n / 100);
+  const seats = raw.map(v => Math.floor(v));
+  const used = seats.reduce((a, b) => a + b, 0);
+  let rem = n - used;
+  const fracs = raw.map((v, i) => ({ i, f: v - Math.floor(v) }));
+  if (rem > 0) {
+    fracs.sort((a, b) => b.f - a.f);
+    for (let k = 0; k < rem; k++) seats[fracs[k % fracs.length].i]++;
+  } else if (rem < 0) {
+    fracs.sort((a, b) => a.f - b.f);
+    for (let k = 0; k < -rem; k++) {
+      const i = fracs[k % fracs.length].i;
+      if (seats[i] > 0) seats[i]--;
+    }
+  }
+  ps.forEach((p, i) => p.seats = seats[i]);
+}
+
+/* ----- порог большинства ----- */
+function majorityBase() {
+  const d = state.design;
+  const n = Math.max(1, Math.round(Number(state.totalSeats) || 1));
+  if (!d.majorityOnlyOccupied) return n;
+  const occ = state.parties.reduce((s, p) => p.status !== 'vacant' ? s + p.seats : s, 0);
+  return occ > 0 ? occ : n;
+}
+function computeMajorityCount() {
+  const d = state.design;
+  const base = majorityBase();
+  const preset = d.majorityPreset || 'simple';
+  if (preset === 'custom') return Math.max(0, Math.round(Number(d.majoritySeats) || 0));
+  if (preset === 'qualified') return Math.ceil(base * 0.6);
+  if (preset === 'constitutional') return Math.ceil(base * 2 / 3);
+  return Math.floor(base / 2) + 1;
+}
+function autoMajorityLabel() {
+  const M = computeMajorityCount();
+  const lang = getLang();
+  const t = getT();
+  return `${t.majority}: ${M} ${seatWord(M, lang)}`;
+}
+
+/* =========================================================
+   6. БАЛАНСИРОВКА ПРОЦЕНТОВ
+   ========================================================= */
+function rebalance(changedId) {
+  const ps = state.parties;
+  if (!ps.length) return;
+  const changed = ps.find(p => p.id === changedId) || null;
+  const lockedOthers = ps.filter(p => p.locked && p.id !== changedId);
+  const lockedSum = lockedOthers.reduce((s, p) => s + p.pct, 0);
+
+  if (changed) {
+    const maxPct = Math.max(0, 100 - lockedSum);
+    changed.pct = clamp(changed.pct, 0, maxPct);
+  }
+
+  const free = ps.filter(p => !p.locked && p.id !== changedId);
+  const usedByChanged = changed ? changed.pct : 0;
+  let remaining = 100 - lockedSum - usedByChanged;
+  if (remaining < 0) remaining = 0;
+
+  if (free.length) {
+    const w = free.reduce((s, p) => s + p.pct, 0);
+    if (w > 1e-6) free.forEach(p => p.pct = remaining * p.pct / w);
+    else free.forEach(p => p.pct = remaining / free.length);
+
+    const total = ps.reduce((s, p) => s + p.pct, 0);
+    const drift = 100 - total;
+    if (Math.abs(drift) > 1e-9) {
+      let big = free[0];
+      free.forEach(p => { if (p.pct > big.pct) big = p; });
+      big.pct = Math.max(0, big.pct + drift);
+    }
+  }
+  recomputeSeats();
+}
+
+/* =========================================================
+   7. СОРТИРОВКА
+   ========================================================= */
+function getSortedParties(forceWestminster) {
+  const arr = state.parties.slice();
+  switch (state.sortMode) {
+    case 'seats-desc':
+      arr.sort((a, b) => (b.seats - a.seats) || a.name.localeCompare(b.name, 'ru'));
+      break;
+    case 'seats-asc':
+      arr.sort((a, b) => (a.seats - b.seats) || a.name.localeCompare(b.name, 'ru'));
+      break;
+    case 'name':
+      arr.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+      break;
+    default: break;
+  }
+
+  const independents = arr.filter(p => p.status === 'independent');
+  const others = arr.filter(p => p.status !== 'independent');
+
+  if (forceWestminster) {
+    others.sort((a, b) => {
+      const ca = a.coalition ? 0 : 1;
+      const cb = b.coalition ? 0 : 1;
+      if (ca !== cb) return ca - cb;
+      return 0;
+    });
+  }
+
+  return others.concat(independents);
+}
+
+/* =========================================================
+   8. ПОСТРОЕНИЕ МАКЕТА КАРТОЧКИ
+   ========================================================= */
+function buildLayout() {
+  const d = state.design;
+  const fam = d.font || 'Inter';
+  const lang = d.lang || 'ru';
+  const TR = I18N[lang] || I18N.ru;
+  const W = 1200, PAD = 64, innerW = W - PAD * 2;
+  const L = { W, H: 0 };
+  let y = PAD;
+
+  L.headerItems = [];
+  L.headerTop = y;
+
+  /* ---------- шапка ---------- */
+  if (d.showHeader) {
+    const items = [];
+    const logoPos = d.logoPos || 'above-center';
+    const hasLogo = !!(state.logo && state.logoW);
+    const t = (state.title || '').trim();
+
+    const titleSize = Math.max(8, Number(d.titleSize) || 62);
+    const titleWeight = d.titleBold !== false ? 700 : 400;
+    const titleStyle = d.titleItalic ? 'italic ' : '';
+    const titleLS = Number(d.titleLetterSpacing) || 0;
+    const padTop = Math.max(0, Number(d.titlePadTop) || 0);
+    const padBottom = Math.max(0, Number(d.titlePadBottom) || 0);
+    const titleAlign = d.titleAlign || 'center';
+    const titleText = d.titleUpper ? t.toUpperCase() : t;
+
+    const pushTitleItem = (lines, tx, ty, areaX, areaW) => {
+      items.push({
+        type: 'title', lines, size: titleSize,
+        x: tx, y: ty,
+        lineH: Math.round(titleSize * 1.16),
+        align: titleAlign,
+        areaX, areaW,
+        weight: titleWeight, style: titleStyle,
+        letterSpacing: titleLS,
+        underline: !!d.titleUnderline,
+        color: d.titleColor || '',
+        shadow: !!d.titleShadow,
+        stroke: !!d.titleStroke,
+        strokeWidth: Math.max(0.5, Number(d.titleStrokeWidth) || 2)
+      });
+    };
+
+    let lw = 0, lh = 0;
+    if (hasLogo) {
+      const isBeside = logoPos === 'beside-left' || logoPos === 'beside-right';
+      const maxH = isBeside ? 96 : 108;
+      const maxW = isBeside ? 180 : 420;
+      const sc = Math.min(maxH / state.logoH, maxW / state.logoW);
+      lw = state.logoW * sc;
+      lh = state.logoH * sc;
+    }
+
+    if (logoPos === 'beside-left' || logoPos === 'beside-right') {
+      y += padTop;
+
+      const gap = 24;
+      const titleAreaW = innerW - lw - gap;
+      let titleAreaX = (logoPos === 'beside-left') ? (PAD + lw + gap) : PAD;
+
+      setFont(mctx, titleWeight, titleSize, fam, titleStyle);
+      let lines = [];
+      if (titleText) {
+        withLetterSpacing(mctx, titleLS, () => {
+          lines = wrapLines(mctx, titleText, titleAreaW);
+        });
+      }
+      const lineH = Math.round(titleSize * 1.16);
+      const titleH = lines.length * lineH;
+      const rowH = Math.max(lh, titleH);
+
+      const logoX = logoPos === 'beside-left' ? PAD : W - PAD - lw;
+      const logoY = y + (rowH - lh) / 2;
+      if (hasLogo) items.push({ type: 'logo', x: logoX, y: logoY, w: lw, h: lh, src: state.logo });
+
+      if (titleText) {
+        let tx;
+        if (titleAlign === 'left') tx = titleAreaX;
+        else if (titleAlign === 'right') tx = titleAreaX + titleAreaW;
+        else tx = titleAreaX + titleAreaW / 2;
+        pushTitleItem(lines, tx, y + (rowH - titleH) / 2, titleAreaX, titleAreaW);
+      }
+
+      y += rowH;
+      y += padBottom;
+      y += 30;
+    } else {
+      const titleAreaX = PAD;
+      const titleAreaW = innerW;
+
+      if (hasLogo) {
+        let lx;
+        if (logoPos === 'above-left') lx = PAD;
+        else if (logoPos === 'above-right') lx = W - PAD - lw;
+        else if (logoPos === 'manual') lx = (W - lw) / 2 + (Number(d.logoOffsetX) || 0);
+        else lx = (W - lw) / 2;
+        const ly = y + (logoPos === 'manual' ? (Number(d.logoOffsetY) || 0) : 0);
+        items.push({ type: 'logo', x: lx, y: ly, w: lw, h: lh, src: state.logo });
+        y = Math.max(y, ly + lh) + 26;
+      }
+
+      if (titleText) {
+        y += padTop;
+
+        setFont(mctx, titleWeight, titleSize, fam, titleStyle);
+        let lines = [];
+        withLetterSpacing(mctx, titleLS, () => {
+          lines = wrapLines(mctx, titleText, titleAreaW);
+        });
+        const lineH = Math.round(titleSize * 1.16);
+
+        let tx;
+        if (titleAlign === 'left') tx = titleAreaX;
+        else if (titleAlign === 'right') tx = titleAreaX + titleAreaW;
+        else tx = titleAreaX + titleAreaW / 2;
+
+        pushTitleItem(lines, tx, y, titleAreaX, titleAreaW);
+        y += lines.length * lineH;
+        y += padBottom;
+      }
+      if (items.length) y += 30;
+    }
+    L.headerItems = items;
+  }
+
+  /* ---------- диаграмма ---------- */
+  const n = Math.max(1, Math.round(Number(state.totalSeats) || 1));
+  const order = getSortedParties(d.chartType === 'westminster');
+  const coalitionParties = order.filter(p => p.coalition);
+  const coalitionSeats = coalitionParties.reduce((s, p) => s + p.seats, 0);
+
+  let sl;
+  if (d.chartType === 'westminster') {
+    sl = computeWestminsterLayout(n, coalitionSeats);
+  } else {
+    sl = computeSeatLayout(n, {
+      arcDegrees: Number(d.arcDegrees) || 180,
+      innerExtend: (Number(d.innerRadius) || 0) / 100
+    });
+  }
+
+  const availW = Math.min(innerW, 920);
+  const scale = availW / sl.width;
+
+  L.isWestminster = !!sl.isWestminster;
+  L.bbox = sl.bbox;
+  L.seatR_base = scale;
+  L.seatR = (d.seatAutoSize !== false)
+    ? scale
+    : scale * (Number(d.seatSizeFactor) || 0.85);
+  L.seatShape = d.seatShape || 'circle';
+
+  L.cx = W / 2 - (sl.bbox.minX + sl.bbox.maxX) / 2 * scale;
+  L.cy = y - sl.bbox.minY * scale;
+  L.scale = scale;
+  L.seats = sl.seats;
+
+  L.arcCx = W / 2;
+  L.arcCy = L.cy;
+  L.outerR = sl.outerR;
+  L.innerR = sl.innerR;
+  L.startAngle = sl.startAngle || 0;
+  L.arcRad = sl.arcRad || 0;
+
+  y += sl.height * scale + 38;
+
+  /* ---------- счётчик ---------- */
+  L.count = null;
+  if (d.showCount) {
+    const size = 108;
+    const blockH = size * 0.78 + 52;
+    L.count = {
+      x: W / 2,
+      yNum: y + size * 0.78,
+      yLabel: y + size * 0.78 + 48,
+      size, labelSize: 25,
+      numText: String(n),
+      label: seatWord(n, lang).toUpperCase()
+    };
+    y += blockH + 46;
+  }
+
+  /* ---------- легенда и цвета/статусы мест ---------- */
+  L.legendRows = [];
+  L.coalBox = null;
+
+  const seatColors = [];
+  const seatCoalition = [];
+  const seatVacant = [];
+
+  if (d.chartType === 'westminster') {
+    const leftParties = order.filter(p => p.coalition);
+    const rightParties = order.filter(p => !p.coalition);
+    const lp = leftParties.length ? leftParties : order.slice(0, Math.max(1, Math.ceil(order.length/2)));
+    const rp = leftParties.length ? rightParties : order.slice(lp.length);
+
+    let leftRemain = sl.leftCount;
+    for (const p of lp) {
+      for (let k = 0; k < p.seats; k++) {
+        if (leftRemain <= 0) break;
+        seatColors.push(p.color);
+        seatCoalition.push(!!p.coalition);
+        seatVacant.push(p.status === 'vacant');
+        leftRemain--;
+      }
+      if (leftRemain <= 0) break;
+    }
+    let rightRemain = sl.rightCount;
+    for (const p of rp) {
+      for (let k = 0; k < p.seats; k++) {
+        if (rightRemain <= 0) break;
+        seatColors.push(p.color);
+        seatCoalition.push(!!p.coalition);
+        seatVacant.push(p.status === 'vacant');
+        rightRemain--;
+      }
+      if (rightRemain <= 0) break;
+    }
+  } else {
+    order.forEach(p => {
+      for (let k = 0; k < p.seats; k++) {
+        seatColors.push(p.color);
+        seatCoalition.push(!!p.coalition);
+        seatVacant.push(p.status === 'vacant');
+      }
+    });
+  }
+  while (seatColors.length < L.seats.length) {
+    seatColors.push(seatColors[seatColors.length - 1] || '#9aa0a6');
+    seatCoalition.push(false);
+    seatVacant.push(false);
+  }
+  seatColors.length = L.seats.length;
+  seatCoalition.length = L.seats.length;
+  seatVacant.length = L.seats.length;
+  L.seatColors = seatColors;
+  L.seatCoalition = seatCoalition;
+  L.seatVacant = seatVacant;
+
+  /* ---------- линия большинства ---------- */
+  L.majorityLine = null;
+  if (d.showMajority && !sl.isWestminster && n > 1) {
+    const base = d.majorityOnlyOccupied
+      ? Math.max(1, seatVacant.reduce((s, v) => s + (v ? 0 : 1), 0))
+      : n;
+
+    const preset = d.majorityPreset || 'simple';
+    let M;
+    if (preset === 'custom') M = Math.max(0, Math.round(Number(d.majoritySeats) || 0));
+    else if (preset === 'qualified') M = Math.ceil(base * 0.6);
+    else if (preset === 'constitutional') M = Math.ceil(base * 2 / 3);
+    else M = Math.floor(base / 2) + 1;
+
+    // Позиция в индексах мест (визуальный порядок)
+    let boundaryIdx;
+    if (d.majorityOnlyOccupied && M > 0) {
+      let cum = 0; boundaryIdx = -1;
+      for (let i = 0; i < seatVacant.length; i++) {
+        if (!seatVacant[i]) {
+          cum++;
+          if (cum === M) { boundaryIdx = i + 0.5; break; }
+        }
+      }
+      if (boundaryIdx < 0) boundaryIdx = seatVacant.length - 0.5;
+    } else {
+      boundaryIdx = M - 0.5;
+    }
+    boundaryIdx = clamp(boundaryIdx, 0, n - 0.5);
+
+    const majAngle = sl.startAngle - sl.arcRad * boundaryIdx / Math.max(1, n - 1);
+    const customLabel = (d.majorityLabel || '').trim();
+
+    L.majorityLine = {
+      angle: majAngle,
+      count: M,
+      base: base,
+      r1: (sl.innerR || 0) * scale,
+      r2: (sl.outerR || 0) * scale + 22,
+      label: customLabel || `${TR.majority}: ${M} ${seatWord(M, lang)}`,
+      color: d.majorityColor || d.accent
+    };
+  }
+
+  /* ---------- дуга-скобка коалиции ---------- */
+  L.coalBracket = null;
+  if (d.showCoalition && !sl.isWestminster) {
+    const coalIdxs = [];
+    for (let i = 0; i < L.seats.length; i++) {
+      if (seatCoalition[i]) coalIdxs.push(i);
+    }
+    if (coalIdxs.length > 1) {
+      const minI = coalIdxs[0];
+      const maxI = coalIdxs[coalIdxs.length - 1];
+      if (maxI - minI + 1 === coalIdxs.length) {
+        const aStart = L.seats[minI].a;
+        const aEnd = L.seats[maxI].a;
+        L.coalBracket = {
+          aStart, aEnd,
+          r: (sl.outerR || 0) * scale + 14
+        };
+      }
+    }
+  }
+
+  /* ---------- легенда ---------- */
+  if (d.showLegend && order.length) {
+    const nonC = order.filter(p => !p.coalition);
+    const coal = order.filter(p => p.coalition);
+    const showBox = d.showCoalition && coal.length > 0;
+
+    const legendW = Math.min(innerW, 900);
+    const legendX = (W - legendW) / 2;
+    const rowH = 58;
+    let ly = y;
+
+    const mkRow = (p, x, w) => {
+      const delta = Number(p.delta) || 0;
+      const row = {
+        x, w, y: ly, h: rowH,
+        color: p.color, seats: p.seats, pct: p.pct, delta
+      };
+      const valText = p.seats + '  ·  ' + fmtPct(p.pct) + '%';
+
+      setFont(mctx, 500, 27, fam);
+      const valW = mctx.measureText(valText).width;
+
+      let deltaText = '';
+      let deltaW = 0;
+      if (delta !== 0) {
+        deltaText = delta > 0 ? `+${delta}` : `${delta}`;
+        setFont(mctx, 700, 25, fam);
+        deltaW = mctx.measureText(deltaText).width + 14;
+      }
+
+      setFont(mctx, 600, 28, fam);
+      const nameText = truncate(mctx, p.name || '—', Math.max(20, w - 44 - valW - deltaW - 30));
+
+      row.nameText = nameText;
+      row.valText = valText;
+      row.valW = valW;
+      row.deltaText = deltaText;
+      row.deltaColor = delta > 0 ? '#2ecc71' : '#ff5f6d';
+      row.deltaX = x + w - valW - 14;
+
+      ly += rowH;
+      L.legendRows.push(row);
+    };
+
+    nonC.forEach(p => mkRow(p, legendX, legendW));
+
+    if (showBox) {
+      const FRAME_PAD = 22;
+      const HEADER_H = 50;
+      const BOTTOM_PAD = 16;
+
+      const contentW = legendW;
+      const frameW = contentW + 2 * FRAME_PAD;
+
+      let frameX;
+      if (d.coalAlign === 'left') frameX = PAD;
+      else if (d.coalAlign === 'right') frameX = W - PAD - frameW;
+      else frameX = (W - frameW) / 2;
+
+      frameX += Number(d.coalOffsetX) || 0;
+
+      const contentX = frameX + FRAME_PAD;
+
+      ly += 24;
+      const frameY = ly + (Number(d.coalOffsetY) || 0);
+
+      ly = frameY + HEADER_H;
+      coal.forEach(p => mkRow(p, contentX, contentW));
+      ly += BOTTOM_PAD;
+
+      const seatsSum = coal.reduce((s, p) => s + p.seats, 0);
+      const pctSum = coal.reduce((s, p) => s + p.pct, 0);
+
+      L.coalBox = {
+        x: frameX,
+        y: frameY,
+        w: frameW,
+        h: ly - frameY,
+        radius: (d.coalRadius != null ? Number(d.coalRadius) : 18),
+        strokeW: (d.coalWidth != null ? Number(d.coalWidth) : 2.5),
+        labelX: contentX,
+        labelY: frameY + 32,
+        label: TR.coalition.toUpperCase(),
+        sumX: contentX + contentW,
+        sumText: seatsSum + '  ·  ' + fmtPct(pctSum) + '%'
+      };
+    }
+    y = ly;
+  }
+
+  /* ---------- подвал ---------- */
+  L.footer = null;
+  if (d.footerText && String(d.footerText).trim()) {
+    L.footer = { text: String(d.footerText).trim(), size: 18 };
+    y += 56;
+  }
+
+  L.H = Math.ceil(y + PAD);
+
+  if (L.coalBox) {
+    const bottom = L.coalBox.y + L.coalBox.h + PAD;
+    if (bottom > L.H) L.H = Math.ceil(bottom);
+  }
+  const logoItem = L.headerItems.find(it => it.type === 'logo');
+  if (logoItem) {
+    const bottom = logoItem.y + logoItem.h + PAD;
+    if (bottom > L.H) L.H = Math.ceil(bottom);
+  }
+
+  if (L.footer) {
+    L.footer.y = L.H - PAD * 0.55;
+    L.footer.x = W / 2;
+  }
+
+  return L;
+}
+
+/* =========================================================
+   9. ОТРИСОВКА НА CANVAS
+   ========================================================= */
+function drawCard(ctx, L) {
+  const d = state.design;
+  const fam = d.font || 'Inter';
+  const W = L.W, H = L.H;
+  const TAU = 6.283185307;
+
+  ctx.save();
+  ctx.clearRect(0, 0, W, H);
+
+  if (d.bgType === 'image' && bgImg) {
+    const s = Math.max(W / bgImg.width, H / bgImg.height);
+    const iw = bgImg.width * s, ih = bgImg.height * s;
+    ctx.drawImage(bgImg, (W - iw) / 2, (H - ih) / 2, iw, ih);
+  } else if (d.bgType === 'gradient') {
+    const gp = gradientPoints(d.bgAngle || 135, W, H);
+    const g = ctx.createLinearGradient(gp.x1, gp.y1, gp.x2, gp.y2);
+    g.addColorStop(0, d.bg1); g.addColorStop(1, d.bg2);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  } else if (d.bgType === 'solid') {
+    ctx.fillStyle = d.bg1; ctx.fillRect(0, 0, W, H);
+  }
+
+  ctx.textBaseline = 'alphabetic';
+  for (const it of L.headerItems) {
+    if (it.type === 'logo') {
+      if (logoImg) ctx.drawImage(logoImg, it.x, it.y, it.w, it.h);
+    } else {
+      setFont(ctx, it.weight, it.size, fam, it.style || '');
+      ctx.fillStyle = it.color || d.text;
+      ctx.textAlign = it.align === 'left' ? 'left' : it.align === 'right' ? 'right' : 'center';
+
+      withLetterSpacing(ctx, it.letterSpacing || 0, () => {
+        if (it.shadow) {
+          ctx.shadowColor = 'rgba(0,0,0,0.45)';
+          ctx.shadowBlur = Math.max(2, it.size * 0.12);
+          ctx.shadowOffsetX = Math.max(1, it.size * 0.03);
+          ctx.shadowOffsetY = Math.max(1, it.size * 0.04);
+        }
+
+        it.lines.forEach((ln, i) => {
+          const by = it.y + i * it.lineH + it.size * 0.8;
+          if (it.stroke) {
+            ctx.strokeStyle = it.color || d.text;
+            ctx.lineWidth = it.strokeWidth;
+            ctx.strokeText(ln, it.x, by);
+          }
+          ctx.fillText(ln, it.x, by);
+        });
+
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+
+        if (it.underline) {
+          ctx.strokeStyle = it.color || d.text;
+          ctx.lineWidth = Math.max(1, it.size * 0.045);
+          ctx.beginPath();
+          it.lines.forEach((ln, i) => {
+            const w = ctx.measureText(ln).width;
+            const by = it.y + i * it.lineH + it.size * 0.8;
+            const uY = by + Math.max(2, it.size * 0.08);
+            let sx;
+            if (it.align === 'left') sx = it.x;
+            else if (it.align === 'right') sx = it.x - w;
+            else sx = it.x - w / 2;
+            ctx.moveTo(sx, uY);
+            ctx.lineTo(sx + w, uY);
+          });
+          ctx.stroke();
+        }
+      });
+    }
+  }
+
+  /* ---------- места ---------- */
+  const seatR = L.seatR;
+  const shape = L.seatShape || 'circle';
+  const isCircle = shape === 'circle';
+  const isSquare = shape === 'square' || shape === 'square-sharp';
+  const isSharpSquare = shape === 'square-sharp';
+  const coalW = d.showCoalition ? clamp(Number(d.coalSeatStrokeWidth) || 0, 0, 5) : 0;
+  const coalColor = d.coalSeatStrokeColor || d.accent;
+
+  for (let i = 0; i < L.seats.length; i++) {
+    const s = L.seats[i];
+    const px = L.cx + s.x * L.scale;
+    const py = L.cy + s.y * L.scale;
+    const color = L.seatColors[i] || '#9aa0a6';
+    const isCoal = L.seatCoalition[i];
+    const isVacant = L.seatVacant[i];
+
+    if (isSharpSquare) {
+      const side = seatR * 1.7;
+      ctx.beginPath();
+      ctx.rect(px - side/2, py - side/2, side, side);
+    } else if (isSquare) {
+      const side = seatR * 1.7;
+      rrPath(ctx, px - side/2, py - side/2, side, side, side * 0.2);
+    } else {
+      ctx.beginPath();
+      ctx.arc(px, py, seatR, 0, TAU);
+    }
+
+    if (isVacant) {
+      if (isCoal && coalW > 0) {
+        ctx.strokeStyle = coalColor;
+        ctx.lineWidth = Math.max(coalW, 1.5);
+      } else {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = Math.max(1.5, seatR * 0.35);
+      }
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = color;
+      ctx.fill();
+      if (isCoal && coalW > 0) {
+        ctx.strokeStyle = coalColor;
+        ctx.lineWidth = coalW;
+        ctx.stroke();
+      }
+    }
+  }
+
+  /* ---------- дуга-скобка коалиции ---------- */
+  if (L.coalBracket) {
+    const br = L.coalBracket;
+    const acx = L.arcCx, acy = L.arcCy;
+    ctx.save();
+    ctx.strokeStyle = d.accent;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.arc(acx, acy, br.r, -br.aStart, -br.aEnd, false);
+    ctx.stroke();
+
+    const tick = 8;
+    [-br.aStart, -br.aEnd].forEach(ca => {
+      const dx = Math.cos(ca), dy = Math.sin(ca);
+      ctx.beginPath();
+      ctx.moveTo(acx + (br.r - tick) * dx, acy + (br.r - tick) * dy);
+      ctx.lineTo(acx + (br.r + tick) * dx, acy + (br.r + tick) * dy);
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+
+  /* ---------- линия большинства ---------- */
+  if (L.majorityLine) {
+    const ml = L.majorityLine;
+    const acx = L.arcCx, acy = L.arcCy;
+    const a = ml.angle;
+    const col = ml.color || d.accent;
+    const x1 = acx + ml.r1 * Math.cos(a);
+    const y1 = acy - ml.r1 * Math.sin(a);
+    const x2 = acx + ml.r2 * Math.cos(a);
+    const y2 = acy - ml.r2 * Math.sin(a);
+
+    ctx.save();
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const lx = acx + (ml.r2 + 22) * Math.cos(a);
+    const ly = acy - (ml.r2 + 22) * Math.sin(a);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    setFont(ctx, 700, 20, fam);
+    ctx.fillStyle = col;
+    ctx.fillText(ml.label || '', lx, ly);
+    ctx.restore();
+  }
+
+  /* ---------- счётчик ---------- */
+  if (L.count) {
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    setFont(ctx, 800, L.count.size, fam);
+    ctx.fillStyle = d.text;
+    ctx.fillText(L.count.numText, L.count.x, L.count.yNum);
+    setFont(ctx, 600, L.count.labelSize, fam);
+    ctx.fillStyle = d.muted;
+    try { ctx.letterSpacing = '6px'; } catch (e) {}
+    ctx.fillText(L.count.label, L.count.x + 3, L.count.yLabel);
+    try { ctx.letterSpacing = '0px'; } catch (e) {}
+  }
+
+  /* ---------- легенда ---------- */
+  for (const row of L.legendRows) {
+    const cy = row.y + row.h / 2;
+    ctx.fillStyle = row.color;
+    rrPath(ctx, row.x + 2, cy - 10, 20, 20, 7);
+    ctx.fill();
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    setFont(ctx, 600, 28, fam);
+    ctx.fillStyle = d.text;
+    ctx.fillText(row.nameText, row.x + 38, cy + 10);
+
+    setFont(ctx, 500, 27, fam);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = d.muted;
+    ctx.fillText(row.valText, row.x + row.w, cy + 10);
+
+    if (row.delta !== 0 && row.deltaText) {
+      setFont(ctx, 700, 25, fam);
+      ctx.fillStyle = row.deltaColor;
+      ctx.fillText(row.deltaText, row.deltaX, cy + 10);
+    }
+  }
+
+  /* ---------- рамка коалиции ---------- */
+  if (L.coalBox) {
+    const b = L.coalBox;
+    rrPath(ctx, b.x, b.y, b.w, b.h, b.radius);
+    ctx.strokeStyle = d.accent;
+    ctx.lineWidth = b.strokeW;
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    setFont(ctx, 700, 21, fam);
+    ctx.fillStyle = d.accent;
+    try { ctx.letterSpacing = '3px'; } catch (e) {}
+    ctx.fillText(b.label, b.labelX, b.labelY);
+    try { ctx.letterSpacing = '0px'; } catch (e) {}
+
+    ctx.textAlign = 'right';
+    setFont(ctx, 600, 22, fam);
+    ctx.fillText(b.sumText, b.sumX, b.labelY);
+  }
+
+  /* ---------- подвал ---------- */
+  if (L.footer) {
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    setFont(ctx, 400, L.footer.size, fam);
+    ctx.fillStyle = d.muted;
+    ctx.globalAlpha = 0.6;
+    ctx.fillText(L.footer.text, L.footer.x, L.footer.y);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+/* =========================================================
+   10. ПРЕДПРОСМОТР + FIT-TO-SCREEN
+   ========================================================= */
+const previewCanvas = $('#preview');
+const pctx = previewCanvas.getContext('2d');
+let renderPending = false;
+
+function render() {
+  if (renderPending) return;
+  renderPending = true;
+  requestAnimationFrame(() => {
+    renderPending = false;
+    doRender();
+  });
+}
+
+function doRender() {
+  const L = buildLayout();
+  currentLayout = L;
+
+  const area = document.getElementById('canvasArea');
+  const r = area.getBoundingClientRect();
+  const padX = 30, padTop = 64, padBottom = 30;
+  const availW = Math.max(60, r.width - padX*2);
+  const availH = Math.max(60, r.height - padTop - padBottom);
+
+  const fitScale = Math.min(availW / L.W, availH / L.H, 1.4);
+  const SS = clamp(fitScale * 2, 1.25, 2.5);
+
+  previewCanvas.width = Math.max(1, Math.round(L.W * SS));
+  previewCanvas.height = Math.max(1, Math.round(L.H * SS));
+  pctx.setTransform(SS, 0, 0, SS, 0, 0);
+  drawCard(pctx, L);
+
+  previewCanvas.style.width = Math.round(L.W * fitScale) + 'px';
+  previewCanvas.style.height = Math.round(L.H * fitScale) + 'px';
+}
+
+/* =========================================================
+   11. ЭКСПОРТ
+   ========================================================= */
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+}
+
+function safeName() {
+  return (state.title || 'parliament').replace(/[\\/:*?"<>|]+/g, '_').slice(0, 60);
+}
+
+async function exportPNG(scale) {
+  const L = buildLayout();
+  const c = document.createElement('canvas');
+  c.width = Math.round(L.W * scale);
+  c.height = Math.round(L.H * scale);
+  const ctx = c.getContext('2d');
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  drawCard(ctx, L);
+  const blob = await new Promise(res => c.toBlob(res, 'image/png'));
+  if (blob) downloadBlob(blob, safeName() + '.png');
+  toast(uiT('toast.png', { s: scale }));
+}
+
+function cardToSVG(L) {
+  const d = state.design;
+  const fam = (d.font || 'Inter').replace(/"/g, '');
+  const W = L.W, H = L.H;
+  const defs = [];
+  const out = [];
+
+  defs.push(`<style>@import url('https://fonts.googleapis.com/css2?family=${fam.replace(/ /g, '+')}&amp;display=swap');</style>`);
+
+  let bgFill = 'none';
+  if (d.bgType === 'solid') bgFill = d.bg1;
+  else if (d.bgType === 'gradient') {
+    const gp = gradientPoints(d.bgAngle || 135, W, H);
+    defs.push(`<linearGradient id="bg" gradientUnits="userSpaceOnUse" x1="${gp.x1}" y1="${gp.y1}" x2="${gp.x2}" y2="${gp.y2}"><stop offset="0" stop-color="${d.bg1}"/><stop offset="1" stop-color="${d.bg2}"/></linearGradient>`);
+    bgFill = 'url(#bg)';
+  }
+
+  const anyTitleShadow = L.headerItems.some(it => it.type === 'title' && it.shadow);
+  if (anyTitleShadow) {
+    defs.push(`<filter id="tshadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="2" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.45"/></filter>`);
+  }
+
+  const ff = `font-family="'${fam}', 'Segoe UI', sans-serif"`;
+  const inner = [];
+
+  inner.push(`<rect x="0" y="0" width="${W}" height="${H}" fill="${bgFill}"/>`);
+  if (d.bgType === 'image' && d.bgImage) {
+    inner.push(`<image x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" href="${d.bgImage}"/>`);
+  }
+
+  for (const it of L.headerItems) {
+    if (it.type === 'logo') {
+      inner.push(`<image x="${it.x.toFixed(2)}" y="${it.y.toFixed(2)}" width="${it.w.toFixed(2)}" height="${it.h.toFixed(2)}" preserveAspectRatio="xMidYMid meet" href="${it.src}"/>`);
+    } else {
+      const anchor = it.align === 'left' ? 'start' : it.align === 'right' ? 'end' : 'middle';
+      const fill = it.color || d.text;
+      const extra = [];
+      if (it.style) extra.push(`font-style="italic"`);
+      if (it.underline) extra.push(`text-decoration="underline"`);
+      if (it.letterSpacing) extra.push(`letter-spacing="${it.letterSpacing}"`);
+      if (it.stroke) {
+        extra.push(`stroke="${fill}"`);
+        extra.push(`stroke-width="${it.strokeWidth}"`);
+        extra.push(`paint-order="stroke"`);
+      }
+      if (it.shadow) extra.push(`filter="url(#tshadow)"`);
+      it.lines.forEach((ln, i) => {
+        const by = it.y + i * it.lineH + it.size * 0.8;
+        inner.push(`<text x="${it.x.toFixed(2)}" y="${by.toFixed(2)}" text-anchor="${anchor}" ${ff} font-size="${it.size}" font-weight="${it.weight}" fill="${fill}" ${extra.join(' ')}>${esc(ln)}</text>`);
+      });
+    }
+  }
+
+  /* ---------- места ---------- */
+  const seatShape = L.seatShape || 'circle';
+  const isCircleSvg = seatShape === 'circle';
+  const isSquareSvg = seatShape === 'square' || seatShape === 'square-sharp';
+  const isSharpSquareSvg = seatShape === 'square-sharp';
+  const coalW = d.showCoalition ? clamp(Number(d.coalSeatStrokeWidth) || 0, 0, 5) : 0;
+  const coalColor = d.coalSeatStrokeColor || d.accent;
+
+  for (let i = 0; i < L.seats.length; i++) {
+    const s = L.seats[i];
+    const px = L.cx + s.x * L.scale;
+    const py = L.cy + s.y * L.scale;
+    const color = L.seatColors[i] || '#9aa0a6';
+    const isCoal = L.seatCoalition[i];
+    const isVacant = L.seatVacant[i];
+
+    let fill, stroke, sw;
+    if (isVacant) {
+      fill = 'none';
+      if (isCoal && coalW > 0) {
+        stroke = coalColor;
+        sw = Math.max(coalW, 1.5);
+      } else {
+        stroke = color;
+        sw = Math.max(1.5, L.seatR * 0.35);
+      }
+    } else {
+      fill = color;
+      if (isCoal && coalW > 0) {
+        stroke = coalColor;
+        sw = coalW;
+      } else {
+        stroke = 'none';
+        sw = 0;
+      }
+    }
+
+    let attrs = `fill="${fill}"`;
+    if (stroke !== 'none' && sw > 0) {
+      attrs += ` stroke="${stroke}" stroke-width="${sw.toFixed(2)}"`;
+    }
+
+    if (isSharpSquareSvg) {
+      const side = L.seatR * 1.7;
+      inner.push(`<rect x="${(px - side/2).toFixed(2)}" y="${(py - side/2).toFixed(2)}" width="${side.toFixed(2)}" height="${side.toFixed(2)}" ${attrs}/>`);
+    } else if (isSquareSvg) {
+      const side = L.seatR * 1.7;
+      const rxs = (side * 0.2).toFixed(2);
+      inner.push(`<rect x="${(px - side/2).toFixed(2)}" y="${(py - side/2).toFixed(2)}" width="${side.toFixed(2)}" height="${side.toFixed(2)}" rx="${rxs}" ${attrs}/>`);
+    } else {
+      inner.push(`<circle cx="${px.toFixed(2)}" cy="${py.toFixed(2)}" r="${L.seatR.toFixed(2)}" ${attrs}/>`);
+    }
+  }
+
+  /* ---------- дуга-скобка коалиции ---------- */
+  if (L.coalBracket) {
+    const br = L.coalBracket;
+    const acx = L.arcCx, acy = L.arcCy;
+    const sx = acx + br.r * Math.cos(br.aStart);
+    const sy = acy - br.r * Math.sin(br.aStart);
+    const ex = acx + br.r * Math.cos(br.aEnd);
+    const ey = acy - br.r * Math.sin(br.aEnd);
+    const spanRad = Math.abs(br.aStart - br.aEnd);
+    const largeArc = spanRad > Math.PI ? 1 : 0;
+    const sweep = 1;
+    const path = `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${br.r.toFixed(2)} ${br.r.toFixed(2)} 0 ${largeArc} ${sweep} ${ex.toFixed(2)} ${ey.toFixed(2)}`;
+    inner.push(`<path d="${path}" fill="none" stroke="${d.accent}" stroke-width="2"/>`);
+
+    const tick = 8;
+    [br.aStart, br.aEnd].forEach(a => {
+      const x1 = acx + (br.r - tick) * Math.cos(a);
+      const y1 = acy - (br.r - tick) * Math.sin(a);
+      const x2 = acx + (br.r + tick) * Math.cos(a);
+      const y2 = acy - (br.r + tick) * Math.sin(a);
+      inner.push(`<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="${d.accent}" stroke-width="2"/>`);
+    });
+  }
+
+  /* ---------- линия большинства ---------- */
+  if (L.majorityLine) {
+    const ml = L.majorityLine;
+    const acx = L.arcCx, acy = L.arcCy;
+    const a = ml.angle;
+    const col = ml.color || d.accent;
+    const x1 = acx + ml.r1 * Math.cos(a);
+    const y1 = acy - ml.r1 * Math.sin(a);
+    const x2 = acx + ml.r2 * Math.cos(a);
+    const y2 = acy - ml.r2 * Math.sin(a);
+    inner.push(`<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="${col}" stroke-width="2" stroke-dasharray="5 5"/>`);
+
+    const lx = acx + (ml.r2 + 22) * Math.cos(a);
+    const ly = acy - (ml.r2 + 22) * Math.sin(a);
+    inner.push(`<text x="${lx.toFixed(2)}" y="${ly.toFixed(2)}" text-anchor="middle" dominant-baseline="middle" ${ff} font-size="20" font-weight="700" fill="${col}">${esc(ml.label || '')}</text>`);
+  }
+
+  /* ---------- счётчик ---------- */
+  if (L.count) {
+    inner.push(`<text x="${L.count.x}" y="${L.count.yNum.toFixed(2)}" text-anchor="middle" ${ff} font-size="${L.count.size}" font-weight="800" fill="${d.text}">${esc(L.count.numText)}</text>`);
+    inner.push(`<text x="${L.count.x}" y="${L.count.yLabel.toFixed(2)}" text-anchor="middle" ${ff} font-size="${L.count.labelSize}" font-weight="600" letter-spacing="6" fill="${d.muted}">${esc(L.count.label)}</text>`);
+  }
+
+  /* ---------- легенда ---------- */
+  for (const row of L.legendRows) {
+    const cy = row.y + row.h / 2;
+    inner.push(`<rect x="${(row.x + 2).toFixed(2)}" y="${(cy - 10).toFixed(2)}" width="20" height="20" rx="7" fill="${row.color}"/>`);
+    inner.push(`<text x="${(row.x + 38).toFixed(2)}" y="${(cy + 10).toFixed(2)}" ${ff} font-size="28" font-weight="600" fill="${d.text}">${esc(row.nameText)}</text>`);
+    inner.push(`<text x="${(row.x + row.w).toFixed(2)}" y="${(cy + 10).toFixed(2)}" text-anchor="end" ${ff} font-size="27" font-weight="500" fill="${d.muted}">${esc(row.valText)}</text>`);
+    if (row.delta !== 0 && row.deltaText) {
+      inner.push(`<text x="${row.deltaX.toFixed(2)}" y="${(cy + 10).toFixed(2)}" text-anchor="end" ${ff} font-size="25" font-weight="700" fill="${row.deltaColor}">${esc(row.deltaText)}</text>`);
+    }
+  }
+
+  /* ---------- рамка коалиции ---------- */
+  if (L.coalBox) {
+    const b = L.coalBox;
+    inner.push(`<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${b.radius}" fill="none" stroke="${d.accent}" stroke-width="${b.strokeW}"/>`);
+    inner.push(`<text x="${b.labelX}" y="${b.labelY}" ${ff} font-size="21" font-weight="700" letter-spacing="3" fill="${d.accent}">${esc(b.label)}</text>`);
+    inner.push(`<text x="${b.sumX}" y="${b.labelY}" text-anchor="end" ${ff} font-size="22" font-weight="600" fill="${d.accent}">${esc(b.sumText)}</text>`);
+  }
+
+  /* ---------- подвал ---------- */
+  if (L.footer) {
+    inner.push(`<text x="${L.footer.x}" y="${L.footer.y.toFixed(2)}" text-anchor="middle" ${ff} font-size="${L.footer.size}" font-weight="400" fill="${d.muted}" opacity="0.6">${esc(L.footer.text)}</text>`);
+  }
+
+  out.push(`<?xml version="1.0" encoding="UTF-8"?>`);
+  out.push(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`);
+  out.push(`<defs>${defs.join('')}</defs>`);
+  out.push(inner.join(''));
+  out.push(`</svg>`);
+  return out.join('\n');
+}
+
+function exportSVG() {
+  const L = buildLayout();
+  const svg = cardToSVG(L);
+  downloadBlob(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }), safeName() + '.svg');
+  toast(uiT('toast.svg'));
+}
+
+/* =========================================================
+   12. ЦВЕТОВОЙ ПИКЕР
+   ========================================================= */
+const CP_PALETTE = [
+  '#ffffff','#f5f5f5','#d4d4d4','#8a8a8a','#4a4a4a','#1a1a1a','#000000','#3a86ff','#4361ee','#4cc9f0',
+  '#00b4d8','#06d6a0','#2a9d8f','#8ac926','#ffb703','#fb8500','#ff006e','#e63946','#d00000','#8338ec',
+  '#9b5de5','#f15bb5','#ff5f6d','#ffd166','#c1121f','#7f5539','#a47148','#e9c46a','#118ab2','#023e8a'
+];
+
+let cpEl = null;
+let cpAnchor = null;
+let cpState = null;
+
+function buildColorPicker() {
+  if (cpEl) return cpEl;
+  cpEl = document.createElement('div');
+  cpEl.className = 'cp-pop';
+  cpEl.innerHTML = `
+    <div class="cp-sv" id="cpSv"><div class="cp-sv-handle" id="cpSvHandle"></div></div>
+    <div class="cp-slider cp-hue" id="cpHue"><div class="cp-sl-handle" id="cpHueHandle"></div></div>
+    <div class="cp-slider cp-alpha" id="cpAlpha"><div class="cp-sl-handle" id="cpAlphaHandle"></div></div>
+    <div class="cp-row">
+      <span class="cp-prev" id="cpPrev"></span>
+      <input class="cp-hex" id="cpHex" type="text" spellcheck="false" autocomplete="off">
+    </div>
+    <div class="cp-palette" id="cpPalette"></div>
+  `;
+  document.body.appendChild(cpEl);
+
+  const pal = cpEl.querySelector('#cpPalette');
+  CP_PALETTE.forEach(col => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'cp-sw';
+    b.style.background = col;
+    b.title = col;
+    b.addEventListener('click', () => {
+      const c = parseColor(col);
+      const hsv = rgbToHsv(c);
+      cpState.h = hsv.h; cpState.s = hsv.s; cpState.v = hsv.v; cpState.a = 1;
+      updateCpUI();
+      emitCp();
+    });
+    pal.appendChild(b);
+  });
+
+  bindSvDrag(cpEl.querySelector('#cpSv'));
+  bindSlider(cpEl.querySelector('#cpHue'), p => { cpState.h = p * 360; updateCpUI(); emitCp(); });
+  bindSlider(cpEl.querySelector('#cpAlpha'), p => { cpState.a = p; updateCpUI(); emitCp(); });
+
+  const hex = cpEl.querySelector('#cpHex');
+
+  const normalizeHexInput = (val) => {
+    if (val == null) return null;
+    let v = String(val).trim();
+    if (!v) return null;
+    if (v[0] === '#') v = v.slice(1);
+    if (!/^[0-9a-fA-F]+$/.test(v)) return null;
+    if (![3, 4, 6, 8].includes(v.length)) return null;
+    return '#' + v.toLowerCase();
+  };
+
+  const applyHexValue = () => {
+    const norm = normalizeHexInput(hex.value);
+    if (!norm) return;
+    const c = parseColor(norm);
+    const hsv = rgbToHsv(c);
+    cpState.h = hsv.h; cpState.s = hsv.s; cpState.v = hsv.v;
+    if (c.a !== 1) cpState.a = c.a;
+    updateCpUI(true);
+    emitCp();
+  };
+
+  hex.addEventListener('input', applyHexValue);
+  hex.addEventListener('paste', e => {
+    const cd = e.clipboardData || window.clipboardData;
+    const pasted = cd ? cd.getData('text') : '';
+    const norm = normalizeHexInput(pasted);
+    if (norm) {
+      e.preventDefault();
+      hex.value = norm;
+      applyHexValue();
+    } else {
+      hex.select();
+    }
+  });
+
+  return cpEl;
+}
+
+function bindSvDrag(el) {
+  let drag = false;
+  const move = e => {
+    const r = el.getBoundingClientRect();
+    const x = clamp((e.clientX - r.left) / r.width, 0, 1);
+    const y = clamp((e.clientY - r.top) / r.height, 0, 1);
+    cpState.s = x;
+    cpState.v = 1 - y;
+    updateCpUI();
+    emitCp();
+  };
+  el.addEventListener('pointerdown', e => { drag = true; el.setPointerCapture(e.pointerId); move(e); e.preventDefault(); });
+  el.addEventListener('pointermove', e => { if (drag) move(e); });
+  el.addEventListener('pointerup', () => { drag = false; });
+  el.addEventListener('pointercancel', () => { drag = false; });
+}
+
+function bindSlider(el, cb) {
+  let drag = false;
+  const move = e => {
+    const r = el.getBoundingClientRect();
+    const p = clamp((e.clientX - r.left) / r.width, 0, 1);
+    cb(p);
+  };
+  el.addEventListener('pointerdown', e => { drag = true; el.setPointerCapture(e.pointerId); move(e); e.preventDefault(); });
+  el.addEventListener('pointermove', e => { if (drag) move(e); });
+  el.addEventListener('pointerup', () => { drag = false; });
+  el.addEventListener('pointercancel', () => { drag = false; });
+}
+
+function updateCpUI(skipHex) {
+  if (!cpEl) return;
+  const { h, s, v, a } = cpState;
+  const rgb = hsvToRgb(h, s, v);
+
+  const sv = cpEl.querySelector('#cpSv');
+  sv.style.background =
+    `linear-gradient(to top,#000,transparent),` +
+    `linear-gradient(to right,#fff,transparent),` +
+    `hsl(${h},100%,50%)`;
+
+  cpEl.querySelector('#cpSvHandle').style.left = (s * 100) + '%';
+  cpEl.querySelector('#cpSvHandle').style.top = ((1 - v) * 100) + '%';
+  cpEl.querySelector('#cpHueHandle').style.left = (h / 360 * 100) + '%';
+  cpEl.querySelector('#cpAlphaHandle').style.left = (a * 100) + '%';
+
+  cpEl.querySelector('#cpAlpha').style.setProperty('--c', toHex(rgb));
+
+  const prev = cpEl.querySelector('#cpPrev');
+  const css = toCss(rgb, a);
+  if (a < 1) {
+    prev.style.background =
+      `linear-gradient(${css},${css}),` +
+      `repeating-conic-gradient(#777 0 25%,#444 0 50%) 0 0/10px 10px`;
+  } else {
+    prev.style.background = css;
+  }
+
+  if (!skipHex) {
+    const hexEl = cpEl.querySelector('#cpHex');
+    if (document.activeElement !== hexEl) hexEl.value = toHex8(rgb, a);
+  }
+}
+
+function emitCp() {
+  if (!cpState || typeof cpState.onChange !== 'function') return;
+  const rgb = hsvToRgb(cpState.h, cpState.s, cpState.v);
+  cpState.onChange(toCss(rgb, cpState.a));
+}
+
+function openColorPicker(anchor, color, onChange) {
+  buildColorPicker();
+  cpAnchor = anchor;
+  const c = parseColor(color);
+  const hsv = rgbToHsv(c);
+  cpState = { h: hsv.h, s: hsv.s, v: hsv.v, a: c.a, onChange };
+
+  updateCpUI();
+
+  cpEl.classList.add('show');
+  cpEl.style.visibility = 'hidden';
+  cpEl.style.left = '-9999px';
+  cpEl.style.top = '-9999px';
+  const pw = cpEl.offsetWidth, ph = cpEl.offsetHeight;
+  cpEl.style.visibility = '';
+
+  const rect = anchor.getBoundingClientRect();
+  let left = rect.left;
+  let top = rect.bottom + 6;
+  if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+  if (top + ph > window.innerHeight - 8) top = rect.top - ph - 6;
+  if (top < 8) top = 8;
+  if (left < 8) left = 8;
+  cpEl.style.left = left + 'px';
+  cpEl.style.top = top + 'px';
+
+  document.removeEventListener('pointerdown', cpOutside, true);
+  setTimeout(() => {
+    document.addEventListener('pointerdown', cpOutside, true);
+  }, 0);
+}
+
+function cpOutside(e) {
+  if (!cpEl) return;
+  if (cpEl.contains(e.target)) return;
+  if (cpAnchor && cpAnchor.contains(e.target)) return;
+  closeColorPicker();
+}
+
+function closeColorPicker() {
+  if (!cpEl) return;
+  cpEl.classList.remove('show');
+  document.removeEventListener('pointerdown', cpOutside, true);
+  cpAnchor = null;
+}
+
+const colorCtrls = {};
+
+function setupColorBtn(id, getter, setter) {
+  const el = document.getElementById(id);
+  if (!el) return null;
+  el.innerHTML = '<span class="cf-sw"></span><span class="cf-hex"></span>';
+  const sw = el.querySelector('.cf-sw');
+  const tx = el.querySelector('.cf-hex');
+  const update = () => {
+    const v = getter() || '#000000';
+    sw.style.background =
+      `linear-gradient(${v},${v}),` +
+      `repeating-conic-gradient(#666 0 25%,#3a3a3a 0 50%) 0 0/6px 6px`;
+    tx.textContent = v;
+  };
+  el.addEventListener('click', () => {
+    openColorPicker(el, getter() || '#000000', v => {
+      setter(v);
+      update();
+    });
+  });
+  update();
+  return { update };
+}
+
+/* =========================================================
+   13. UI: ПАРТИИ
+   ========================================================= */
+const partyEls = new Map();
+
+const ICONS = {
+  flag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>'
+};
+
+function paintSwatch(el, color) {
+  el.style.background =
+    `linear-gradient(${color},${color}),` +
+    `repeating-conic-gradient(#666 0 25%,#3a3a3a 0 50%) 0 0/6px 6px`;
+}
+
+function renderPartyList() {
+  const wrap = $('#partyList');
+  wrap.innerHTML = '';
+  partyEls.clear();
+
+  state.parties.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'party' + (p.coalition ? ' is-coal' : '');
+    el.dataset.id = p.id;
+
+    const deltaVal = (Number(p.delta) === 0 || p.delta == null) ? '' : p.delta;
+    const status = p.status || 'normal';
+
+    el.innerHTML = `
+      <div class="pr-top">
+        <button type="button" class="swatch" title="${uiT('party.color')}"></button>
+        <input type="text" class="pname" value="${esc(p.name)}" spellcheck="false">
+        <button class="icon-btn coal" title="${uiT('party.coal')}">${ICONS.flag}</button>
+        <button class="icon-btn lock" title="${uiT('party.lock')}">${ICONS.lock}</button>
+        <button class="icon-btn del" title="${uiT('party.del')}">${ICONS.trash}</button>
+      </div>
+      <div class="pr-bottom">
+        <input type="range" class="pct-range" min="0" max="100" step="0.1" value="${p.pct}">
+        <input type="number" class="pct-num" min="0" max="100" step="0.1" value="${p.pct.toFixed(1)}">
+        <span class="pct-sign">%</span>
+        <span class="seats-badge">${p.seats}</span>
+      </div>
+      <div class="pr-status">
+        <input type="number" class="delta-inp" step="1" value="${deltaVal}" placeholder="${uiT('party.deltaPh')}" title="${uiT('party.deltaTitle')}">
+        <div class="seg compact">
+          <button type="button" data-v="normal" class="${status==='normal'?'active':''}" title="${uiT('party.statusNormal')}">●</button>
+          <button type="button" data-v="vacant" class="${status==='vacant'?'active':''}" title="${uiT('party.statusVacant')}">○</button>
+          <button type="button" data-v="independent" class="${status==='independent'?'active':''}" title="${uiT('party.statusIndependent')}">⊘</button>
+        </div>
+      </div>`;
+    wrap.appendChild(el);
+
+    const refs = {
+      root: el,
+      swatch: el.querySelector('.swatch'),
+      name: el.querySelector('.pname'),
+      coal: el.querySelector('.coal'),
+      lock: el.querySelector('.lock'),
+      del: el.querySelector('.del'),
+      range: el.querySelector('.pct-range'),
+      num: el.querySelector('.pct-num'),
+      seats: el.querySelector('.seats-badge'),
+      delta: el.querySelector('.delta-inp'),
+      statusBtns: Array.from(el.querySelectorAll('.seg.compact button'))
+    };
+    paintSwatch(refs.swatch, p.color);
+    refs.range.style.accentColor = p.color;
+    partyEls.set(p.id, refs);
+
+    refs.swatch.addEventListener('click', () => {
+      openColorPicker(refs.swatch, p.color, v => {
+        p.color = v;
+        paintSwatch(refs.swatch, v);
+        refs.range.style.accentColor = v;
+        render();
+      });
+    });
+
+    refs.name.addEventListener('input', e => {
+      p.name = e.target.value;
+      render();
+    });
+
+    refs.coal.addEventListener('click', () => {
+      p.coalition = !p.coalition;
+      refs.coal.classList.toggle('on', p.coalition);
+      refs.root.classList.toggle('is-coal', p.coalition);
+      render();
+    });
+
+    refs.lock.addEventListener('click', () => {
+      p.locked = !p.locked;
+      refs.lock.classList.toggle('on', p.locked);
+    });
+
+    refs.del.addEventListener('click', () => removeParty(p.id));
+
+    refs.range.addEventListener('input', e => {
+      p.pct = parseFloat(e.target.value) || 0;
+      rebalance(p.id);
+      syncPartyUI(p.id);
+      render();
+    });
+
+    refs.num.addEventListener('input', e => {
+      const v = parseFloat(e.target.value);
+      if (isNaN(v)) return;
+      p.pct = v;
+      rebalance(p.id);
+      syncPartyUI(p.id);
+      render();
+    });
+    refs.num.addEventListener('blur', e => {
+      e.target.value = p.pct.toFixed(1);
+    });
+
+    refs.delta.addEventListener('input', e => {
+      const raw = String(e.target.value).trim();
+      if (raw === '' || raw === '-') {
+        p.delta = 0;
+      } else {
+        const v = parseFloat(raw);
+        p.delta = isNaN(v) ? 0 : v;
+      }
+      render();
+    });
+    refs.delta.addEventListener('blur', e => {
+      if (e.target.value === '-' || e.target.value === '') e.target.value = '';
+      else if (Number(p.delta) === 0) e.target.value = '';
+    });
+
+    refs.statusBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        p.status = btn.dataset.v;
+        refs.statusBtns.forEach(b => b.classList.toggle('active', b === btn));
+        render();
+      });
+    });
+  });
+
+  $('#partyCount').textContent = state.parties.length;
+}
+
+function syncPartyUI(skipId) {
+  state.parties.forEach(p => {
+    const r = partyEls.get(p.id);
+    if (!r) return;
+    if (p.id !== skipId) {
+      if (document.activeElement !== r.range) r.range.value = p.pct;
+      if (document.activeElement !== r.num) r.num.value = p.pct.toFixed(1);
+    } else {
+      if (document.activeElement !== r.num) r.num.value = p.pct.toFixed(1);
+      r.range.value = p.pct;
+    }
+    r.seats.textContent = p.seats;
+    r.coal.classList.toggle('on', p.coalition);
+    r.lock.classList.toggle('on', p.locked);
+    r.root.classList.toggle('is-coal', p.coalition);
+    r.range.style.accentColor = p.color;
+    if (document.activeElement !== r.delta) {
+      r.delta.value = (Number(p.delta) === 0 || p.delta == null) ? '' : p.delta;
+    }
+    const status = p.status || 'normal';
+    r.statusBtns.forEach(b => b.classList.toggle('active', b.dataset.v === status));
+  });
+  $('#partyCount').textContent = state.parties.length;
+  syncMajorityUI();
+}
+
+function addParty() {
+  const idx = state.parties.length;
+  const share = 100 / (idx + 1);
+  const p = {
+    id: uid(),
+    name: uiT('party.new') + ' ' + String.fromCharCode(1040 + idx % 32),
+    color: PALETTE[idx % PALETTE.length],
+    pct: share,
+    locked: false,
+    coalition: false,
+    seats: 0,
+    delta: 0,
+    status: 'normal'
+  };
+  state.parties.push(p);
+  rebalance(p.id);
+  renderPartyList();
+  syncPartyUI();
+  render();
+  const r = partyEls.get(p.id);
+  if (r) { r.name.focus(); r.name.select(); }
+}
+
+function removeParty(id) {
+  const i = state.parties.findIndex(p => p.id === id);
+  if (i < 0) return;
+  state.parties.splice(i, 1);
+  if (state.parties.length) {
+    const target = state.parties.find(p => !p.locked) || state.parties[0];
+    rebalance(target.id);
+  }
+  renderPartyList();
+  syncPartyUI();
+  render();
+}
+
+/* =========================================================
+   14. UI: ШРИФТЫ
+   ========================================================= */
+function setupFontCombo() {
+  const input = $('#fontInput');
+  const list = $('#fontList');
+
+  function build(filter) {
+    const q = (filter || '').trim().toLowerCase();
+    const items = FONTS.filter(f => !q || f.toLowerCase().includes(q));
+    list.innerHTML = '';
+    if (!items.length) {
+      list.innerHTML = '<div class="combo-empty">' + uiT('font.empty') + '</div>';
+      return;
+    }
+    items.slice(0, 140).forEach(f => {
+      const d = document.createElement('div');
+      d.className = 'combo-item' + (f === state.design.font ? ' active' : '');
+      d.textContent = f;
+      d.style.fontFamily = `"${f}", sans-serif`;
+      queueFont(f);
+      d.addEventListener('mousedown', e => {
+        e.preventDefault();
+        selectFont(f);
+      });
+      list.appendChild(d);
+    });
+  }
+
+  function selectFont(f) {
+    state.design.font = f;
+    input.value = f;
+    ensureFont(f);
+    list.classList.remove('show');
+    render();
+  }
+
+  input.addEventListener('focus', () => { build(input.value); list.classList.add('show'); input.select(); });
+  input.addEventListener('input', () => { build(input.value); list.classList.add('show'); });
+  input.addEventListener('blur', () => { setTimeout(() => list.classList.remove('show'), 130); });
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const q = input.value.trim().toLowerCase();
+      const exact = FONTS.find(f => f.toLowerCase() === q);
+      const first = FONTS.find(f => f.toLowerCase().includes(q));
+      if (exact) selectFont(exact);
+      else if (first) selectFont(first);
+    }
+    if (e.key === 'Escape') input.blur();
+  });
+
+  input.value = state.design.font;
+  ensureFont(state.design.font);
+}
+
+/* =========================================================
+   15. UI: ПРЕСЕТЫ / СИНХРОНИЗАЦИЯ
+   ========================================================= */
+function renderPresets() {
+  const wrap = $('#presets');
+  wrap.innerHTML = '';
+  Object.entries(PRESETS).forEach(([key, p]) => {
+    const el = document.createElement('div');
+    el.className = 'preset' + (state.design.preset === key ? ' active' : '');
+    el.innerHTML = `<span class="pv" style="background:${
+      p.bgType === 'gradient'
+        ? `linear-gradient(135deg,${p.bg1},${p.bg2})`
+        : p.bg1
+    }"></span><span>${uiT('preset.' + key) || p.label}</span>`;
+    el.addEventListener('click', () => applyPreset(key));
+    wrap.appendChild(el);
+  });
+}
+
+function applyPreset(key) {
+  const p = PRESETS[key];
+  if (!p) return;
+  const d = state.design;
+  d.preset = key;
+  d.font = p.font;
+  d.bgType = p.bgType;
+  d.bg1 = p.bg1;
+  d.bg2 = p.bg2;
+  d.bgAngle = p.bgAngle;
+  d.text = p.text;
+  d.muted = p.muted;
+  d.accent = p.accent;
+  d.cardRadius = p.cardRadius;
+  ensureFont(p.font);
+  syncDesignUI();
+  renderPresets();
+  render();
+}
+
+function syncCoalUI() {
+  const d = state.design;
+  const r = $('#coalRadius'); if (r && document.activeElement !== r) r.value = d.coalRadius;
+  const w = $('#coalWidth'); if (w && document.activeElement !== w) w.value = d.coalWidth;
+  const x = $('#coalOffsetX'); if (x && document.activeElement !== x) x.value = Math.round(d.coalOffsetX || 0);
+  const y = $('#coalOffsetY'); if (y && document.activeElement !== y) y.value = Math.round(d.coalOffsetY || 0);
+  $$('#coalAlign button').forEach(b => b.classList.toggle('active', b.dataset.v === (d.coalAlign || 'center')));
+
+  const sw = $('#coalSeatStrokeWidth');
+  if (sw && document.activeElement !== sw) sw.value = Number(d.coalSeatStrokeWidth) || 0;
+  const swl = $('#coalStrokeWidthLabel');
+  if (swl) swl.textContent = '(' + (Number(d.coalSeatStrokeWidth) || 0) + ' px)';
+}
+
+function syncLogoUI() {
+  const d = state.design;
+  const pos = $('#logoPos'); if (pos && document.activeElement !== pos) pos.value = d.logoPos || 'above-center';
+  const x = $('#logoOffsetX'); if (x && document.activeElement !== x) x.value = Math.round(d.logoOffsetX || 0);
+  const y = $('#logoOffsetY'); if (y && document.activeElement !== y) y.value = Math.round(d.logoOffsetY || 0);
+  $('#logoOffsetField').style.display = (d.logoPos === 'manual') ? '' : 'none';
+}
+
+function syncTitleUI() {
+  const d = state.design;
+  const setVal = (id, v) => {
+    const el = $('#' + id);
+    if (el && document.activeElement !== el) el.value = v;
+  };
+  setVal('titleSize', d.titleSize || 62);
+  setVal('titleLetterSpacing', d.titleLetterSpacing || 0);
+  setVal('titlePadTop', d.titlePadTop || 0);
+  setVal('titlePadBottom', d.titlePadBottom || 0);
+  setVal('titleStrokeWidth', d.titleStrokeWidth || 2);
+
+  $('#titleShadow').checked = !!d.titleShadow;
+  $('#titleStroke').checked = !!d.titleStroke;
+  $('#titleStrokeWidthField').style.display = d.titleStroke ? '' : 'none';
+
+  $$('#titleAlignBtns button').forEach(b => {
+    b.classList.toggle('active', b.dataset.v === (d.titleAlign || 'center'));
+  });
+
+  const styleOn = {
+    bold: d.titleBold !== false,
+    italic: !!d.titleItalic,
+    underline: !!d.titleUnderline,
+    upper: !!d.titleUpper
+  };
+  $$('.tstyle-btn').forEach(b => {
+    b.classList.toggle('active', !!styleOn[b.dataset.v]);
+  });
+
+  if (colorCtrls.title) colorCtrls.title.update();
+}
+
+function syncChartTypeUI() {
+  const d = state.design;
+  $$('#chartTypeBtns button').forEach(b => {
+    b.classList.toggle('active', b.dataset.v === (d.chartType || 'classic'));
+  });
+  const arcWrap = $('#arcDegreesWrap');
+  if (arcWrap) arcWrap.style.display = (d.chartType === 'westminster') ? 'none' : '';
+  $$('#arcDegreesBtns button').forEach(b => {
+    b.classList.toggle('active', String(b.dataset.v) === String(d.arcDegrees || 180));
+  });
+  const sa = $('#seatAutoSize');
+  if (sa) sa.checked = d.seatAutoSize !== false;
+  const ssr = $('#seatSizeRange');
+  if (ssr && document.activeElement !== ssr) ssr.value = Number(d.seatSizeFactor) || 0.85;
+  const ssf = $('#seatSizeField');
+  if (ssf) {
+    ssf.style.opacity = d.seatAutoSize !== false ? '.45' : '1';
+    ssf.style.pointerEvents = d.seatAutoSize !== false ? 'none' : '';
+  }
+  const ssl = $('#seatSizeLabel');
+  if (ssl) ssl.textContent = d.seatAutoSize !== false ? uiT('ui.auto') : '';
+  const irr = $('#innerRadiusRange');
+  if (irr && document.activeElement !== irr) irr.value = Number(d.innerRadius) || 0;
+  const irl = $('#innerRadiusLabel');
+  if (irl) irl.textContent = '(' + (Number(d.innerRadius) || 0) + '%)';
+  $$('#seatShapeBtns button').forEach(b => {
+    b.classList.toggle('active', b.dataset.v === (d.seatShape || 'circle'));
+  });
+}
+
+function syncMajorityUI() {
+  const d = state.design;
+  const cb = $('#tShowMajority'); if (cb) cb.checked = !!d.showMajority;
+  const panel = $('#majorityPanel'); if (panel) panel.style.display = d.showMajority ? '' : 'none';
+
+  const ps = $('#majorityPreset'); if (ps && document.activeElement !== ps) ps.value = d.majorityPreset || 'simple';
+
+  const seats = $('#majoritySeats');
+  if (seats) {
+    seats.readOnly = (d.majorityPreset !== 'custom');
+    if (document.activeElement !== seats) {
+      seats.value = (d.majorityPreset === 'custom')
+        ? Math.max(0, Math.round(Number(d.majoritySeats) || 0))
+        : computeMajorityCount();
+    }
+  }
+
+  const lbl = $('#majorityLabel');
+  if (lbl) {
+    if (document.activeElement !== lbl) lbl.value = d.majorityLabel || '';
+    lbl.placeholder = uiT('majority.auto') + ': ' + autoMajorityLabel();
+  }
+
+  if (colorCtrls.majorityColor) colorCtrls.majorityColor.update();
+
+  const only = $('#majorityOnlyOccupied'); if (only) only.checked = !!d.majorityOnlyOccupied;
+}
+
+function syncLangUI() {
+  const d = state.design;
+  $$('#langBtns button').forEach(b => b.classList.toggle('active', b.dataset.v === (d.lang || 'ru')));
+}
+
+function syncDesignUI() {
+  const d = state.design;
+  const fi = $('#fontInput'); if (fi && document.activeElement !== fi) fi.value = d.font;
+  $('#bgType').value = d.bgType;
+  const ba = $('#bgAngle'); if (ba && document.activeElement !== ba) ba.value = d.bgAngle;
+  $('#tShowHeader').checked = d.showHeader;
+  $('#tShowCount').checked = d.showCount;
+  $('#tShowLegend').checked = d.showLegend;
+  $('#tShowCoal').checked = d.showCoalition;
+  const ft = $('#footerText'); if (ft && document.activeElement !== ft) ft.value = d.footerText || '';
+
+  $('#bgSolidWrap').style.display = d.bgType === 'solid' ? '' : 'none';
+  $('#bgGradWrap').style.display = d.bgType === 'gradient' ? '' : 'none';
+  $('#bgImageWrap').style.display = d.bgType === 'image' ? '' : 'none';
+
+  ['bg1', 'bg1b', 'bg2', 'text', 'accent', 'coalSeatStroke'].forEach(k => {
+    if (colorCtrls[k]) colorCtrls[k].update();
+  });
+  syncCoalUI();
+  syncLogoUI();
+  syncTitleUI();
+  syncChartTypeUI();
+  syncLangUI();
+  syncMajorityUI();
+}
+
+/* =========================================================
+   16. UI: ШАБЛОНЫ (localStorage)
+   ========================================================= */
+const LS_KEY = 'parliamentStudio.templates.v1';
+
+function loadTemplates() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
+  catch (e) { return []; }
+}
+function saveTemplates(list) {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(list)); }
+  catch (e) { toast(uiT('toast.storage')); }
+}
+
+function renderTemplates() {
+  const list = loadTemplates();
+  const wrap = $('#tplList');
+  wrap.innerHTML = '';
+  if (!list.length) {
+    wrap.innerHTML = '<div class="hint" style="margin-top:6px">' + uiT('tpl.empty') + '</div>';
+    return;
+  }
+  const lang = getLang();
+  const dateLocale = lang === 'fr' ? 'fr-FR' : lang === 'en' ? 'en-GB' : 'ru-RU';
+  list.forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'tpl-item';
+    const dt = new Date(t.savedAt);
+    el.innerHTML = `<span class="nm">${esc(t.name)}</span>
+      <span class="dt">${dt.toLocaleDateString(dateLocale)}</span>
+      <button class="icon-btn del">${ICONS.trash}</button>`;
+    el.addEventListener('click', e => {
+      if (e.target.closest('.del')) {
+        const arr = loadTemplates().filter(x => x.id !== t.id);
+        saveTemplates(arr);
+        renderTemplates();
+        return;
+      }
+      loadState(t.data);
+      toast(uiT('toast.tplLoaded', { name: t.name }));
+    });
+    wrap.appendChild(el);
+  });
+}
+
+function loadState(data) {
+  if (!data) return;
+  state.title = data.title || '';
+  state.totalSeats = data.totalSeats || 450;
+  state.sortMode = data.sortMode || 'seats-desc';
+  state.logo = data.logo || null;
+  state.logoW = data.logoW || 0;
+  state.logoH = data.logoH || 0;
+  state.design = Object.assign({}, DEFAULT_DESIGN, data.design || {});
+  state.parties = (data.parties || []).map(p => ({
+    id: p.id || uid(),
+    name: p.name || '',
+    color: p.color || '#888888',
+    pct: Number(p.pct) || 0,
+    locked: !!p.locked,
+    coalition: !!p.coalition,
+    seats: 0,
+    delta: Number(p.delta) || 0,
+    status: ['normal','vacant','independent'].includes(p.status) ? p.status : 'normal'
+  }));
+  if (!state.parties.length) state.parties = makeDefaultParties();
+
+  logoImg = null;
+  if (state.logo) {
+    const img = new Image();
+    img.onload = () => { logoImg = img; render(); };
+    img.src = state.logo;
+  }
+  bgImg = null;
+  if (state.design.bgImage) {
+    const img = new Image();
+    img.onload = () => { bgImg = img; render(); };
+    img.src = state.design.bgImage;
+  }
+
+  recomputeSeats();
+  $('#totalSeats').value = state.totalSeats;
+  $('#sortMode').value = state.sortMode;
+  $('#cardTitle').value = state.title;
+  ensureFont(state.design.font);
+  syncDesignUI();
+  applyUILanguage();
+  renderTemplates();
+  renderPresets();
+  renderLogoUI();
+  renderBgUI();
+  renderPartyList();
+  syncPartyUI();
+  render();
+}
+
+function renderLogoUI() {
+  const has = !!state.logo;
+  $('#logoThumbRow').style.display = has ? '' : 'none';
+  $('#logoZone').style.display = has ? 'none' : '';
+  if (has) $('#logoThumb').src = state.logo;
+}
+
+function renderBgUI() {
+  const has = !!state.design.bgImage;
+  $('#bgThumbRow').style.display = has ? '' : 'none';
+  $('#bgZone').style.display = has ? 'none' : '';
+  if (has) $('#bgThumb').src = state.design.bgImage;
+}
+
+/* =========================================================
+   17. TOAST
+   ========================================================= */
+let toastTimer = null;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* =========================================================
+   18. ЗАГРУЗКА ФАЙЛОВ
+   ========================================================= */
+function readImageFile(file, cb) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => cb(reader.result, img);
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* =========================================================
+   19. DRAG & DROP НА ХОЛСТЕ
+   ========================================================= */
+let dragInfo = null;
+
+function canvasPointFromEvent(e, L) {
+  const rect = previewCanvas.getBoundingClientRect();
+  return {
+    x: (e.clientX - rect.left) / rect.width * L.W,
+    y: (e.clientY - rect.top) / rect.height * L.H
+  };
+}
+
+function findLogoItem(L) {
+  return L ? L.headerItems.find(it => it.type === 'logo') : null;
+}
+
+previewCanvas.addEventListener('pointerdown', e => {
+  const L = currentLayout;
+  if (!L) return;
+  const pt = canvasPointFromEvent(e, L);
+
+  const logoItem = findLogoItem(L);
+  if (logoItem && insideRect(pt.x, pt.y, logoItem)) {
+    if (state.design.logoPos !== 'manual') {
+      const refX = (L.W - logoItem.w) / 2;
+      const refY = L.headerTop || 0;
+      state.design.logoOffsetX = Math.round(logoItem.x - refX);
+      state.design.logoOffsetY = Math.round(logoItem.y - refY);
+      state.design.logoPos = 'manual';
+      syncLogoUI();
+      doRender();
+    }
+    dragInfo = {
+      type: 'logo',
+      clientX0: e.clientX,
+      clientY0: e.clientY,
+      ox: state.design.logoOffsetX || 0,
+      oy: state.design.logoOffsetY || 0,
+      scale: L.W / previewCanvas.getBoundingClientRect().width
+    };
+    previewCanvas.style.cursor = 'grabbing';
+    previewCanvas.setPointerCapture(e.pointerId);
+    e.preventDefault();
+    return;
+  }
+
+  if (L.coalBox && state.design.showCoalition && insideRect(pt.x, pt.y, L.coalBox)) {
+    dragInfo = {
+      type: 'coal',
+      clientX0: e.clientX,
+      clientY0: e.clientY,
+      ox: state.design.coalOffsetX || 0,
+      oy: state.design.coalOffsetY || 0,
+      scale: L.W / previewCanvas.getBoundingClientRect().width
+    };
+    previewCanvas.style.cursor = 'grabbing';
+    previewCanvas.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  }
+});
+
+previewCanvas.addEventListener('pointermove', e => {
+  const L = currentLayout;
+  if (!L) return;
+
+  if (!dragInfo) {
+    const pt = canvasPointFromEvent(e, L);
+    const logoItem = findLogoItem(L);
+    let over = false;
+    if (logoItem && insideRect(pt.x, pt.y, logoItem)) over = true;
+    if (L.coalBox && state.design.showCoalition && insideRect(pt.x, pt.y, L.coalBox)) over = true;
+    previewCanvas.style.cursor = over ? 'grab' : 'default';
+    return;
+  }
+
+  const dx = (e.clientX - dragInfo.clientX0) * dragInfo.scale;
+  const dy = (e.clientY - dragInfo.clientY0) * dragInfo.scale;
+
+  if (dragInfo.type === 'logo') {
+    state.design.logoOffsetX = Math.round(dragInfo.ox + dx);
+    state.design.logoOffsetY = Math.round(dragInfo.oy + dy);
+    syncLogoUI();
+  } else if (dragInfo.type === 'coal') {
+    state.design.coalOffsetX = Math.round(dragInfo.ox + dx);
+    state.design.coalOffsetY = Math.round(dragInfo.oy + dy);
+    syncCoalUI();
+  }
+  render();
+});
+
+function endDrag(e) {
+  if (!dragInfo) return;
+  dragInfo = null;
+  previewCanvas.style.cursor = 'default';
+  try { previewCanvas.releasePointerCapture(e.pointerId); } catch (err) {}
+}
+previewCanvas.addEventListener('pointerup', endDrag);
+previewCanvas.addEventListener('pointercancel', endDrag);
+
+/* =========================================================
+   20. ИНИЦИАЛИЗАЦИЯ И СОБЫТИЯ
+   ========================================================= */
+function init() {
+  $$('.sec-h').forEach(h => {
+    h.addEventListener('click', () => h.parentElement.classList.toggle('open'));
+  });
+
+  state.parties = makeDefaultParties();
+  recomputeSeats();
+
+  $('#totalSeats').value = state.totalSeats;
+  $('#cardTitle').value = state.title;
+  $('#sortMode').value = state.sortMode;
+
+  colorCtrls.bg1 = setupColorBtn('bg1',
+    () => state.design.bg1,
+    v => { state.design.bg1 = v; if (colorCtrls.bg1b) colorCtrls.bg1b.update(); render(); });
+  colorCtrls.bg1b = setupColorBtn('bg1b',
+    () => state.design.bg1,
+    v => { state.design.bg1 = v; if (colorCtrls.bg1) colorCtrls.bg1.update(); render(); });
+  colorCtrls.bg2 = setupColorBtn('bg2',
+    () => state.design.bg2,
+    v => { state.design.bg2 = v; render(); });
+  colorCtrls.text = setupColorBtn('colText',
+    () => state.design.text,
+    v => {
+      state.design.text = v;
+      if (colorCtrls.title) colorCtrls.title.update();
+      render();
+    });
+  colorCtrls.accent = setupColorBtn('colAccent',
+    () => state.design.accent,
+    v => { state.design.accent = v; render(); });
+  colorCtrls.title = setupColorBtn('colTitle',
+    () => state.design.titleColor || state.design.text,
+    v => { state.design.titleColor = v; render(); });
+  colorCtrls.coalSeatStroke = setupColorBtn('coalSeatStrokeColor',
+    () => state.design.coalSeatStrokeColor || state.design.accent,
+    v => { state.design.coalSeatStrokeColor = v; render(); });
+  colorCtrls.majorityColor = setupColorBtn('majorityColor',
+    () => state.design.majorityColor || state.design.accent,
+    v => { state.design.majorityColor = v; render(); });
+
+  renderPresets();
+  setupFontCombo();
+  syncDesignUI();
+  applyUILanguage();
+  renderPartyList();
+  syncPartyUI();
+  renderTemplates();
+  render();
+
+  $('#totalSeats').addEventListener('input', e => {
+    const v = parseInt(e.target.value, 10);
+    if (!isNaN(v) && v > 0) {
+      state.totalSeats = clamp(v, 1, 2000);
+      recomputeSeats();
+      syncPartyUI();
+      render();
+    }
+  });
+
+  $('#sortMode').addEventListener('change', e => {
+    state.sortMode = e.target.value;
+    render();
+  });
+
+  $('#btnAddParty').addEventListener('click', addParty);
+
+  $('#cardTitle').addEventListener('input', e => {
+    state.title = e.target.value;
+    render();
+  });
+
+  /* ---- language ---- */
+  $$('#langBtns button').forEach(b => {
+    b.addEventListener('click', () => {
+      state.design.lang = b.dataset.v;
+      applyLanguageAll();
+    });
+  });
+
+  /* ---- chart type ---- */
+  $$('#chartTypeBtns button').forEach(b => {
+    b.addEventListener('click', () => {
+      state.design.chartType = b.dataset.v;
+      syncChartTypeUI();
+      render();
+    });
+  });
+
+  $$('#arcDegreesBtns button').forEach(b => {
+    b.addEventListener('click', () => {
+      state.design.arcDegrees = parseInt(b.dataset.v, 10) || 180;
+      syncChartTypeUI();
+      render();
+    });
+  });
+
+  $('#seatAutoSize').addEventListener('change', e => {
+    state.design.seatAutoSize = e.target.checked;
+    syncChartTypeUI();
+    render();
+  });
+  $('#seatSizeRange').addEventListener('input', e => {
+    state.design.seatSizeFactor = parseFloat(e.target.value) || 0.85;
+    syncChartTypeUI();
+    render();
+  });
+
+  $('#innerRadiusRange').addEventListener('input', e => {
+    state.design.innerRadius = parseFloat(e.target.value) || 0;
+    syncChartTypeUI();
+    render();
+  });
+
+  $$('#seatShapeBtns button').forEach(b => {
+    b.addEventListener('click', () => {
+      state.design.seatShape = b.dataset.v;
+      syncChartTypeUI();
+      render();
+    });
+  });
+
+  /* ---- title ---- */
+  $('#titleSize').addEventListener('input', e => {
+    const v = parseFloat(e.target.value);
+    if (!isNaN(v)) { state.design.titleSize = clamp(v, 8, 400); render(); }
+  });
+  $('#titleLetterSpacing').addEventListener('input', e => {
+    const v = parseFloat(e.target.value);
+    if (!isNaN(v)) { state.design.titleLetterSpacing = v; render(); }
+  });
+  $('#titlePadTop').addEventListener('input', e => {
+    const v = parseFloat(e.target.value);
+    if (!isNaN(v)) { state.design.titlePadTop = clamp(v, 0, 500); render(); }
+  });
+  $('#titlePadBottom').addEventListener('input', e => {
+    const v = parseFloat(e.target.value);
+    if (!isNaN(v)) { state.design.titlePadBottom = clamp(v, 0, 500); render(); }
+  });
+  $('#titleStrokeWidth').addEventListener('input', e => {
+    const v = parseFloat(e.target.value);
+    if (!isNaN(v)) { state.design.titleStrokeWidth = clamp(v, 0.5, 20); render(); }
+  });
+  $('#titleShadow').addEventListener('change', e => {
+    state.design.titleShadow = e.target.checked;
+    render();
+  });
+  $('#titleStroke').addEventListener('change', e => {
+    state.design.titleStroke = e.target.checked;
+    $('#titleStrokeWidthField').style.display = e.target.checked ? '' : 'none';
+    render();
+  });
+  $$('#titleAlignBtns button').forEach(b => {
+    b.addEventListener('click', () => {
+      state.design.titleAlign = b.dataset.v;
+      $$('#titleAlignBtns button').forEach(x => x.classList.toggle('active', x === b));
+      render();
+    });
+  });
+  $$('.tstyle-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      const v = b.dataset.v;
+      if (v === 'bold') state.design.titleBold = !state.design.titleBold;
+      else if (v === 'italic') state.design.titleItalic = !state.design.titleItalic;
+      else if (v === 'underline') state.design.titleUnderline = !state.design.titleUnderline;
+      else if (v === 'upper') state.design.titleUpper = !state.design.titleUpper;
+      syncTitleUI();
+      render();
+    });
+  });
+
+  /* ---- logo ---- */
+  $('#logoZone').addEventListener('click', () => $('#fileLogo').click());
+  $('#fileLogo').addEventListener('change', e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    readImageFile(f, (data, img) => {
+      state.logo = data;
+      state.logoW = img.naturalWidth;
+      state.logoH = img.naturalHeight;
+      logoImg = img;
+      renderLogoUI();
+      render();
+    });
+    e.target.value = '';
+  });
+  $('#btnRemoveLogo').addEventListener('click', () => {
+    state.logo = null; state.logoW = 0; state.logoH = 0; logoImg = null;
+    renderLogoUI(); render();
+  });
+
+  $('#logoPos').addEventListener('change', e => {
+    state.design.logoPos = e.target.value;
+    if (e.target.value !== 'manual') {
+      state.design.logoOffsetX = 0;
+      state.design.logoOffsetY = 0;
+    }
+    syncLogoUI();
+    render();
+  });
+  $('#logoOffsetX').addEventListener('input', e => {
+    state.design.logoOffsetX = parseFloat(e.target.value) || 0;
+    render();
+  });
+  $('#logoOffsetY').addEventListener('input', e => {
+    state.design.logoOffsetY = parseFloat(e.target.value) || 0;
+    render();
+  });
+
+  /* ---- background ---- */
+  $('#bgType').addEventListener('change', e => {
+    state.design.bgType = e.target.value;
+    syncDesignUI();
+    render();
+  });
+  $('#bgAngle').addEventListener('input', e => {
+    const v = parseInt(e.target.value, 10);
+    if (!isNaN(v)) { state.design.bgAngle = v; render(); }
+  });
+  $('#bgZone').addEventListener('click', () => $('#fileBg').click());
+  $('#fileBg').addEventListener('change', e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    readImageFile(f, (data, img) => {
+      state.design.bgImage = data;
+      state.design.bgType = 'image';
+      bgImg = img;
+      syncDesignUI(); renderBgUI(); render();
+    });
+    e.target.value = '';
+  });
+  $('#btnRemoveBg').addEventListener('click', () => {
+    state.design.bgImage = null; bgImg = null;
+    renderBgUI(); render();
+  });
+
+  /* ---- elements ---- */
+  $('#tShowHeader').addEventListener('change', e => { state.design.showHeader = e.target.checked; render(); });
+  $('#tShowCount').addEventListener('change', e => { state.design.showCount = e.target.checked; render(); });
+  $('#tShowLegend').addEventListener('change', e => { state.design.showLegend = e.target.checked; render(); });
+  $('#tShowCoal').addEventListener('change', e => { state.design.showCoalition = e.target.checked; render(); });
+
+  /* ---- majority ---- */
+  $('#tShowMajority').addEventListener('change', e => {
+    state.design.showMajority = e.target.checked;
+    syncMajorityUI();
+    render();
+  });
+
+  $('#majorityPreset').addEventListener('change', e => {
+    const next = e.target.value;
+    const prev = state.design.majorityPreset || 'simple';
+    if (next === 'custom' && prev !== 'custom') {
+      if (!state.design.majoritySeats) {
+        state.design.majoritySeats = computeMajorityCount();
+      }
+    }
+    state.design.majorityPreset = next;
+    syncMajorityUI();
+    render();
+  });
+
+  $('#majoritySeats').addEventListener('input', e => {
+    if (state.design.majorityPreset !== 'custom') return;
+    const v = parseInt(e.target.value, 10);
+    if (!isNaN(v)) {
+      state.design.majoritySeats = Math.max(0, v);
+      render();
+    }
+  });
+
+  $('#majorityLabel').addEventListener('input', e => {
+    state.design.majorityLabel = e.target.value;
+    render();
+  });
+
+  $('#majorityOnlyOccupied').addEventListener('change', e => {
+    state.design.majorityOnlyOccupied = e.target.checked;
+    syncMajorityUI();
+    render();
+  });
+
+  /* ---- footer ---- */
+  $('#footerText').addEventListener('input', e => {
+    state.design.footerText = e.target.value;
+    render();
+  });
+
+  /* ---- coalition ---- */
+  $('#coalRadius').addEventListener('input', e => {
+    const v = parseFloat(e.target.value);
+    if (!isNaN(v)) { state.design.coalRadius = clamp(v, 0, 50); render(); }
+  });
+  $('#coalWidth').addEventListener('input', e => {
+    const v = parseFloat(e.target.value);
+    if (!isNaN(v)) { state.design.coalWidth = clamp(v, 1, 15); render(); }
+  });
+  $('#coalOffsetX').addEventListener('input', e => {
+    state.design.coalOffsetX = parseFloat(e.target.value) || 0;
+    render();
+  });
+  $('#coalOffsetY').addEventListener('input', e => {
+    state.design.coalOffsetY = parseFloat(e.target.value) || 0;
+    render();
+  });
+
+  $$('#coalAlign button').forEach(b => {
+    b.addEventListener('click', () => {
+      state.design.coalAlign = b.dataset.v;
+      state.design.coalOffsetX = 0;
+      state.design.coalOffsetY = 0;
+      $$('#coalAlign button').forEach(x => x.classList.toggle('active', x === b));
+      syncCoalUI();
+      render();
+    });
+  });
+
+  $('#coalSeatStrokeWidth').addEventListener('input', e => {
+    const v = parseFloat(e.target.value);
+    if (!isNaN(v)) {
+      state.design.coalSeatStrokeWidth = clamp(v, 0, 5);
+      syncCoalUI();
+      render();
+    }
+  });
+
+  /* ---- templates ---- */
+  $('#btnSaveTpl').addEventListener('click', () => {
+    const name = ($('#tplName').value || state.title || uiT('toast.untitled')).trim();
+    const list = loadTemplates();
+    const existing = list.find(t => t.name === name);
+    const payload = JSON.parse(JSON.stringify(state));
+    if (existing) {
+      existing.data = payload;
+      existing.savedAt = Date.now();
+    } else {
+      list.push({ id: uid(), name, data: payload, savedAt: Date.now() });
+    }
+    saveTemplates(list);
+    renderTemplates();
+    toast(uiT('toast.tplSaved', { name: name }));
+  });
+
+  /* ---- export / import ---- */
+  $('#btnPng').addEventListener('click', async () => {
+    const s = parseInt($('#exportScale').value, 10) || 2;
+    await exportPNG(s);
+  });
+  $('#btnSvg').addEventListener('click', exportSVG);
+
+  $('#btnSaveJson').addEventListener('click', () => {
+    const data = JSON.stringify(state, null, 2);
+    downloadBlob(new Blob([data], { type: 'application/json' }), safeName() + '.json');
+    toast(uiT('toast.json'));
+  });
+  $('#btnLoadJson').addEventListener('click', () => $('#fileJson').click());
+  $('#fileJson').addEventListener('change', e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const data = JSON.parse(r.result);
+        loadState(data);
+        toast(uiT('toast.fileLoaded'));
+      } catch (err) {
+        toast(uiT('toast.badJson'));
+      }
+    };
+    r.readAsText(f);
+    e.target.value = '';
+  });
+
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      e.preventDefault();
+      $('#btnPng').click();
+    }
+    if (e.key === 'Escape') closeColorPicker();
+  });
+
+  window.addEventListener('resize', () => {
+    closeColorPicker();
+    render();
+  });
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
