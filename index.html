@@ -4,22 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title data-i18n="doc.title">Parliament Studio — конструктор диаграмм парламента</title>
-
-<script type="text/javascript">
-      (function(m,e,t,r,i,k,a){
-          m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-          m[i].l=1*new Date();
-          for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-          k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
-      })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=114487813', 'ym');
-
-      ym(114487813, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
-</script>
-<noscript><div><img src="https://mc.yandex.ru/watch/114487813" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
-
-<script data-goatcounter="https://jokerexe6.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
-      
 <style>
 :root{
   --bg:#15161a;
@@ -273,10 +257,14 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border:none;border-ra
 }
 .pct-num:focus{border-color:var(--accent)}
 .pct-sign{color:var(--muted2);font-size:11px;margin-left:-4px}
-.seats-badge{
-  min-width:38px;text-align:center;background:var(--panel3);border-radius:6px;
-  padding:3px 6px;font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums;color:#c9ced8;
+.seats-inp{
+  width:56px;height:26px;background:var(--panel3);border:1px solid var(--border);
+  border-radius:6px;text-align:center;padding:0 4px;outline:none;
+  font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums;color:#c9ced8;
+  transition:.14s;
 }
+.seats-inp:hover{border-color:var(--border2)}
+.seats-inp:focus{border-color:var(--accent);color:var(--text)}
 /* party status row */
 .pr-status{display:flex;align-items:center;gap:6px;margin-top:8px}
 .delta-inp{
@@ -288,6 +276,11 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border:none;border-ra
 .delta-inp::placeholder{color:var(--muted2);text-align:right}
 .seg.compact{flex:0 0 auto;width:auto}
 .seg.compact button{height:26px;min-width:32px;padding:0 6px;font-size:13px;line-height:1}
+/* party westminster position row */
+.pr-pos{display:flex;align-items:center;gap:8px;margin-top:8px}
+.pr-pos .pos-label{flex:0 0 auto;font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px}
+.pr-pos .wm-pos{flex:1}
+.pr-pos .wm-pos button{flex:1;min-width:0;padding:0}
 
 /* ---------- toggle switch ---------- */
 .tg{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0}
@@ -516,7 +509,7 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border:none;border-ra
             <input type="range" id="seatSizeRange" min="0.15" max="1.2" step="0.01" value="0.85">
           </div>
 
-          <div class="field">
+          <div class="field" id="innerRadiusField">
             <label><span data-i18n="field.innerRadius">Внутренний радиус</span> <span id="innerRadiusLabel" style="color:var(--muted2);font-weight:400"></span></label>
             <input type="range" id="innerRadiusRange" min="0" max="200" step="1" value="0">
           </div>
@@ -528,6 +521,26 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border:none;border-ra
               <button type="button" data-v="square" data-i18n="seatShape.square">Скруглённые квадраты</button>
               <button type="button" data-v="square-sharp" data-i18n="seatShape.sharp">Квадраты</button>
             </div>
+          </div>
+
+          <div id="westminsterWrap" style="display:none">
+            <div class="field">
+              <label data-i18n="field.wmWingRows">Рядов в крыле (0 — авто)</label>
+              <input class="input" type="number" id="wmWingRows" min="0" max="60" step="2" value="0">
+            </div>
+            <div class="field">
+              <label data-i18n="field.wmCenterCols">Колонок кроссбенча (0 — авто)</label>
+              <input class="input" type="number" id="wmCenterCols" min="0" max="30" step="1" value="0">
+            </div>
+            <div class="field">
+              <label><span data-i18n="field.wmSpacing">Интервал между местами</span> <span id="wmSpacingLabel" style="color:var(--muted2);font-weight:400"></span></label>
+              <input type="range" id="wmSpacing" min="0" max="0.6" step="0.01" value="0.1">
+            </div>
+            <div class="tg" style="margin-bottom:2px"><span data-i18n="tg.wmCozy">Компактно</span>
+              <label class="switch"><input type="checkbox" id="wmCozy" checked><span class="slider"></span></label></div>
+            <div class="tg" style="margin-bottom:2px"><span data-i18n="tg.wmFullWidth">На всю ширину</span>
+              <label class="switch"><input type="checkbox" id="wmFullWidth"><span class="slider"></span></label></div>
+            <div class="hint" data-i18n="hint.westminster">Задайте каждой партии позицию в списке партий: правительство, оппозиция, кроссбенч или спикер.</div>
           </div>
 
           <div class="hint" data-i18n="hint.geometry">Настройки применяются к диаграмме любого типа. «Внутренний радиус» увеличивает пустоту в центре дуги (только для классической).</div>
@@ -862,7 +875,7 @@ const UI_I18N = {
     'sort.name': 'По алфавиту',
     'sort.manual': 'Вручную (порядок списка)',
     'btn.addParty': '+ Добавить партию',
-    'hint.parties': 'Сумма долей всегда 100 %. 🔒 — партия не участвует в автопересчёте. ⚑ — входит в коалицию. Δ — изменение мест к прошлым выборам. ●/○/⊘ — обычные / вакантные / внефракционные.',
+    'hint.parties': 'Сумма долей всегда 100 %. Число мест справа можно править вручную — общее число пересчитается автоматически. 🔒 — партия не участвует в автопересчёте. ⚑ — входит в коалицию. Δ — изменение мест к прошлым выборам. ●/○/⊘ — обычные / вакантные / внефракционные.',
     'field.arc': 'Форма дуги (классическая)',
     'tg.seatAuto': 'Авторазмер мандатов',
     'field.seatSize': 'Размер мандатов',
@@ -872,6 +885,12 @@ const UI_I18N = {
     'seatShape.circle': 'Круги',
     'seatShape.square': 'Скруглённые квадраты',
     'seatShape.sharp': 'Квадраты',
+    'field.wmWingRows': 'Рядов в крыле (0 — авто)',
+    'field.wmCenterCols': 'Колонок кроссбенча (0 — авто)',
+    'field.wmSpacing': 'Интервал между местами',
+    'tg.wmCozy': 'Компактно',
+    'tg.wmFullWidth': 'На всю ширину',
+    'hint.westminster': 'Задайте каждой партии позицию в списке партий: правительство, оппозиция, кроссбенч или спикер. Правительство и оппозиция занимают два крыла, кроссбенч — справа, спикер — в центре.',
     'hint.geometry': 'Настройки применяются к диаграмме любого типа. «Внутренний радиус» увеличивает пустоту в центре дуги (только для классической).',
     'field.cardTitle': 'Заголовок',
     'ph.cardTitle': 'Например: Национальное собрание',
@@ -960,6 +979,16 @@ const UI_I18N = {
     'party.statusNormal': 'Обычные',
     'party.statusVacant': 'Вакантные (полый контур)',
     'party.statusIndependent': 'Внефракционные (в конце диаграммы)',
+    'party.posLabel': 'Позиция',
+    'party.posGov': 'Правительство (левое крыло)',
+    'party.posOpp': 'Оппозиция (правое крыло)',
+    'party.posCross': 'Кроссбенч',
+    'party.posSpeaker': 'Спикер',
+    'party.posGovShort': 'П',
+    'party.posOppShort': 'О',
+    'party.posCrossShort': 'К',
+    'party.posSpeakerShort': 'С',
+    'party.seatsTitle': 'Мест у партии — общее число мест пересчитается автоматически',
     'party.new': 'Партия',
     'font.empty': 'Ничего не найдено',
     'preset.official': 'Официальный',
@@ -995,7 +1024,7 @@ const UI_I18N = {
     'sort.name': 'Alphabetically',
     'sort.manual': 'Manually (list order)',
     'btn.addParty': '+ Add party',
-    'hint.parties': 'Shares always sum to 100 %. 🔒 — party excluded from auto-recalculation. ⚑ — part of the coalition. Δ — seat change vs the previous election. ●/○/⊘ — regular / vacant / independent.',
+    'hint.parties': 'Shares always sum to 100 %. The seat count on the right can be edited manually — the total updates automatically. 🔒 — party excluded from auto-recalculation. ⚑ — part of the coalition. Δ — seat change vs the previous election. ●/○/⊘ — regular / vacant / independent.',
     'field.arc': 'Arc shape (classic)',
     'tg.seatAuto': 'Auto seat size',
     'field.seatSize': 'Seat size',
@@ -1005,6 +1034,12 @@ const UI_I18N = {
     'seatShape.circle': 'Circles',
     'seatShape.square': 'Rounded squares',
     'seatShape.sharp': 'Squares',
+    'field.wmWingRows': 'Bench rows (0 — auto)',
+    'field.wmCenterCols': 'Crossbench columns (0 — auto)',
+    'field.wmSpacing': 'Seat spacing',
+    'tg.wmCozy': 'Cozy parties',
+    'tg.wmFullWidth': 'Full width',
+    'hint.westminster': 'Assign each party a position in the party list: government, opposition, crossbench or speaker. Government and opposition fill the two benches, the crossbench sits on the right, the speaker in the middle.',
     'hint.geometry': 'Settings apply to diagrams of any type. “Inner radius” increases the empty space in the arc center (classic only).',
     'field.cardTitle': 'Title',
     'ph.cardTitle': 'E.g.: National Assembly',
@@ -1093,6 +1128,16 @@ const UI_I18N = {
     'party.statusNormal': 'Regular',
     'party.statusVacant': 'Vacant (hollow outline)',
     'party.statusIndependent': 'Independent (at the end of the diagram)',
+    'party.posLabel': 'Position',
+    'party.posGov': 'Government (left bench)',
+    'party.posOpp': 'Opposition (right bench)',
+    'party.posCross': 'Crossbench',
+    'party.posSpeaker': 'Speaker',
+    'party.posGovShort': 'G',
+    'party.posOppShort': 'O',
+    'party.posCrossShort': 'C',
+    'party.posSpeakerShort': 'S',
+    'party.seatsTitle': 'Party seats — the total updates automatically',
     'party.new': 'Party',
     'font.empty': 'Nothing found',
     'preset.official': 'Official',
@@ -1128,7 +1173,7 @@ const UI_I18N = {
     'sort.name': 'Alphabétique',
     'sort.manual': 'Manuel (ordre de la liste)',
     'btn.addParty': '+ Ajouter un parti',
-    'hint.parties': 'La somme des parts fait toujours 100 %. 🔒 — parti exclu du recalcul automatique. ⚑ — membre de la coalition. Δ — évolution des sièges depuis les dernières élections. ●/○/⊘ — ordinaires / vacants / indépendants.',
+    'hint.parties': 'La somme des parts fait toujours 100 %. Le nombre de sièges à droite peut être modifié à la main — le total se met à jour automatiquement. 🔒 — parti exclu du recalcul automatique. ⚑ — membre de la coalition. Δ — évolution des sièges depuis les dernières élections. ●/○/⊘ — ordinaires / vacants / indépendants.',
     'field.arc': "Forme de l'arc (classique)",
     'tg.seatAuto': 'Taille automatique des sièges',
     'field.seatSize': 'Taille des sièges',
@@ -1138,6 +1183,12 @@ const UI_I18N = {
     'seatShape.circle': 'Cercles',
     'seatShape.square': 'Carrés arrondis',
     'seatShape.sharp': 'Carrés',
+    'field.wmWingRows': 'Rangées par banc (0 — auto)',
+    'field.wmCenterCols': 'Colonnes du crossbench (0 — auto)',
+    'field.wmSpacing': 'Espacement des sièges',
+    'tg.wmCozy': 'Partis compacts',
+    'tg.wmFullWidth': 'Pleine largeur',
+    'hint.westminster': "Attribuez à chaque parti une position dans la liste des partis : gouvernement, opposition, crossbench ou président. Le gouvernement et l'opposition occupent les deux bancs, le crossbench est à droite, le président au centre.",
     'hint.geometry': "Les réglages s'appliquent aux diagrammes de tout type. « Rayon interne » agrandit le vide au centre de l'arc (classique uniquement).",
     'field.cardTitle': 'Titre',
     'ph.cardTitle': 'Ex. : Assemblée nationale',
@@ -1226,6 +1277,16 @@ const UI_I18N = {
     'party.statusNormal': 'Ordinaires',
     'party.statusVacant': 'Vacants (contour creux)',
     'party.statusIndependent': 'Indépendants (en fin de diagramme)',
+    'party.posLabel': 'Position',
+    'party.posGov': 'Gouvernement (banc de gauche)',
+    'party.posOpp': 'Opposition (banc de droite)',
+    'party.posCross': 'Crossbench',
+    'party.posSpeaker': 'Président (orateur)',
+    'party.posGovShort': 'G',
+    'party.posOppShort': 'O',
+    'party.posCrossShort': 'C',
+    'party.posSpeakerShort': 'P',
+    'party.seatsTitle': 'Sièges du parti — le total se met à jour automatiquement',
     'party.new': 'Parti',
     'font.empty': 'Rien trouvé',
     'preset.official': 'Officiel',
@@ -1507,78 +1568,180 @@ function computeSeatLayout(n, opts = {}) {
   };
 }
 
-function computeWestminsterLayout(n, coalitionSeats, opts = {}) {
-  n = Math.max(1, Math.round(n));
-  let leftCount, rightCount;
-  if (coalitionSeats > 0 && coalitionSeats < n) {
-    leftCount = coalitionSeats;
-    rightCount = n - coalitionSeats;
+function partyPos(p) {
+  const pos = p && p.pos;
+  return (pos === 'left' || pos === 'right' || pos === 'center' || pos === 'head')
+    ? pos
+    : ((p && p.coalition) ? 'left' : 'right');
+}
+
+/* Порт алгоритма Вестминстерской диаграммы (Wikimedia parliament diagram tool /
+   arches.elexn.uk): позиции left/right/center/head, авто-расчёт рядов и колонок,
+   режимы cozy и fullwidth. Возвращает места в порядке отрисовки и индекс партии
+   для каждого места (в порядке переданного массива parties). */
+function computeWestminsterLayout(parties, opts = {}) {
+  const spacing = clamp(Number(opts.spacing) || 0, 0, 0.6);
+  const cozy = !!opts.cozy;
+  const fullwidth = !!opts.fullwidth;
+
+  const totals = { left: 0, right: 0, center: 0, head: 0 };
+  const empty = { left: 0, right: 0 };
+  for (const p of parties) totals[p.pos] += p.seats;
+
+  let wingRows = Math.max(0, Math.round(Number(opts.wingRows) || 0));
+  if (!wingRows) {
+    wingRows = Math.ceil(Math.sqrt(Math.max(1, totals.left, totals.right) / 20)) * 2;
+  }
+  const rows = { left: wingRows, right: wingRows };
+
+  let cols;
+  if (cozy) {
+    cols = Math.ceil(Math.max(totals.left, totals.right) / rows.left);
   } else {
-    leftCount = Math.ceil(n / 2);
-    rightCount = n - leftCount;
+    for (const side of ['left', 'right']) {
+      for (const p of parties) {
+        if (p.pos === side) {
+          p.emptyseats = (rows[side] + (-p.seats % rows[side])) % rows[side];
+          empty[side] += p.emptyseats;
+        }
+      }
+    }
+    cols = Math.ceil(Math.max(totals.left + empty.left, totals.right + empty.right) / rows.left);
   }
 
-  function gridFor(count) {
-    if (count <= 0) return { rows: 0, cols: 0 };
-    const rows = Math.max(1, Math.round(Math.sqrt(count / 2.5)));
-    const cols = Math.ceil(count / rows);
-    return { rows, cols };
-  }
-
-  const leftGrid = gridFor(leftCount);
-  const rightGrid = gridFor(rightCount);
-
-  const rowSpacing = 2.6;
-  const colSpacing = 2.4;
-  const aisleW = 4.2;
-
-  const leftW = leftGrid.cols * colSpacing;
-  const rightW = rightGrid.cols * colSpacing;
-
-  const seats = [];
-
-  let placed = 0;
-  for (let row = 0; row < leftGrid.rows && placed < leftCount; row++) {
-    const y = -row * rowSpacing;
-    for (let col = 0; col < leftGrid.cols && placed < leftCount; col++) {
-      const x = -aisleW/2 - (col + 0.5) * colSpacing;
-      seats.push({ x, y, a: 0, r: 0 });
-      placed++;
+  if (fullwidth) {
+    for (const side of ['left', 'right']) {
+      if (cozy) {
+        rows[side] = cols > 0 ? Math.ceil(totals[side] / cols) : 0;
+      } else {
+        for (let R = rows[side]; R > 1; R--) {
+          let F = 0;
+          for (const p of parties) {
+            if (p.pos === side) F += (R - 1 + (-p.seats % (R - 1))) % (R - 1);
+          }
+          if (totals[side] + F > cols * (R - 1)) break;
+          empty[side] = F;
+          rows[side] = R - 1;
+          for (const p of parties) {
+            if (p.pos === side) p.emptyseats = (R - 1 + (-p.seats % (R - 1))) % (R - 1);
+          }
+        }
+      }
     }
   }
 
-  placed = 0;
-  for (let row = 0; row < rightGrid.rows && placed < rightCount; row++) {
-    const y = -row * rowSpacing;
-    for (let col = 0; col < rightGrid.cols && placed < rightCount; col++) {
-      const x = aisleW/2 + (col + 0.5) * colSpacing;
-      seats.push({ x, y, a: 0, r: 0 });
-      placed++;
+  let centerCols = Math.max(0, Math.round(Number(opts.centerCols) || 0));
+  if (!centerCols) centerCols = Math.ceil(Math.sqrt(totals.center / 4));
+  let centerRows = Math.ceil(totals.center / centerCols);
+  if (isNaN(centerRows)) centerRows = 0;
+
+  let a, l;
+  if (totals.head > 0) { a = Math.max(cols + 1, totals.head); l = 1; }
+  else { l = 0; a = cols; }
+  if (totals.center > 0) a += 1 + centerCols;
+
+  const u = Math.max(rows.left + rows.right + 2, centerRows);
+  const c = 350 / Math.max(a, u);
+  const g = c * a + 10;
+  const m = c * u + 10;
+
+  const b = { left: [], right: [], center: [], head: [] };
+  let N = m / 2 - c * (1 - spacing) / 2;
+  N += (rows.left - rows.right) * c / 2;
+
+  for (let i = 0; i < totals.head; i++) b.head.push([5 + c * (i + spacing / 2), N]);
+  for (let col = 0; col < centerCols; col++) {
+    const R = Math.min(centerRows, totals.center - col * centerRows);
+    for (let row = 0; row < R; row++) {
+      b.center.push([g - 5 - (centerCols - col - spacing / 2) * c, (m - R * c) / 2 + c * (row + spacing / 2)]);
+    }
+    b.center.sort((p, q) => p[1] - q[1]);
+  }
+  for (let col = 0; col < cols; col++) {
+    for (let row = 0; row < rows.left; row++) b.left.push([5 + (l + col + spacing / 2) * c, N - (1.5 + row) * c]);
+    for (let row = 0; row < rows.right; row++) b.right.push([5 + (l + col + spacing / 2) * c, N + (1.5 + row) * c]);
+  }
+
+  /* назначение мест партиям (порядок как в SVG-генерации оригинала) */
+  const out = [];
+  const partyIdx = [];
+  const push = (pos, idx) => {
+    out.push({ x: pos[0] + c * (1 - spacing) / 2, y: pos[1] + c * (1 - spacing) / 2, a: 0, r: 0 });
+    partyIdx.push(idx);
+  };
+
+  let P = 0;
+  for (let i = 0; i < parties.length; i++) {
+    const p = parties[i];
+    if (p.pos !== 'head') continue;
+    const R = P + p.seats;
+    for (; P < R; P++) push(b.head[P], i);
+  }
+
+  for (const side of ['left', 'right']) {
+    let arr = b[side];
+    if (fullwidth && rows[side] > 1) {
+      if (side === 'right') arr.sort((p, q) => p[1] - q[1]);
+      else arr.sort((p, q) => q[1] - p[1]);
+      if (cozy) {
+        arr = arr.slice(0, totals[side]);
+        arr.sort((p, q) => p[0] - q[0]);
+      } else {
+        arr.sort((p, q) => p[0] - q[0]);
+        let R = 0;
+        let F = totals[side] + empty[side];
+        let Y = rows[side] * cols - F;
+        for (const p of parties) {
+          if (p.pos === side) {
+            const ee = p.seats + p.emptyseats;
+            let oe;
+            try { oe = Math.round(Y * ee / F); } catch (e) { oe = 0; }
+            oe += -oe % rows[side];
+            const xe = arr.slice(R, R + ee + oe);
+            Y -= oe; F -= ee + oe;
+            if (R < (totals[side] + empty[side]) / 2) xe.sort((p, q) => q[0] - p[0]);
+            if (side === 'right') xe.sort((p, q) => p[1] - q[1]);
+            else xe.sort((p, q) => q[1] - p[1]);
+            for (let k = p.seats; k < xe.length; k++) xe[k][0] = 999;
+            R += ee + oe;
+          }
+          arr.sort((p, q) => p[0] - q[0]);
+        }
+      }
+    } else {
+      arr.sort((p, q) => p[0] - q[0]);
+    }
+
+    P = 0;
+    for (let i = 0; i < parties.length; i++) {
+      const p = parties[i];
+      if (p.pos !== side) continue;
+      const R = P + p.seats;
+      for (; P < R; P++) {
+        if (arr[P] && arr[P][0] < 900) push(arr[P], i);
+      }
+      if (!fullwidth && !cozy) P += (rows[side] + (-p.seats % rows[side])) % rows[side];
     }
   }
 
-  const pad = Math.max(colSpacing, rowSpacing) * 0.7;
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (const s of seats) {
-    minX = Math.min(minX, s.x - pad);
-    maxX = Math.max(maxX, s.x + pad);
-    minY = Math.min(minY, s.y - pad);
-    maxY = Math.max(maxY, s.y + pad);
+  P = 0;
+  for (let i = 0; i < parties.length; i++) {
+    const p = parties[i];
+    if (p.pos !== 'center') continue;
+    const R = P + p.seats;
+    for (; P < R; P++) push(b.center[P], i);
   }
-
-  const totalW = (leftW + aisleW + rightW);
 
   return {
-    seats,
-    bbox: { minX, maxX, minY, maxY },
-    width: maxX - minX,
-    height: maxY - minY,
-    rows: Math.max(leftGrid.rows, rightGrid.rows),
-    leftCount,
-    rightCount,
-    outerR: totalW / 2,
-    innerR: aisleW / 2,
-    rowSpacing, colSpacing, aisleW,
+    seats: out,
+    partyIdx,
+    bbox: { minX: 0, maxX: g, minY: 0, maxY: m },
+    width: g,
+    height: m,
+    cell: c,
+    spacing,
+    outerR: g / 2,
+    innerR: 0,
     isWestminster: true
   };
 }
@@ -1705,6 +1868,12 @@ const DEFAULT_DESIGN = {
   seatSizeFactor: 0.85,
   innerRadius: 0,
   seatShape: 'circle',
+  /* westminster */
+  wmWingRows: 0,
+  wmCenterCols: 0,
+  wmSpacing: 0.1,
+  wmCozy: true,
+  wmFullWidth: false,
   /* coalition */
   coalRadius: 18,
   coalWidth: 2.5,
@@ -2012,11 +2181,20 @@ function buildLayout() {
   const n = Math.max(1, Math.round(Number(state.totalSeats) || 1));
   const order = getSortedParties(d.chartType === 'westminster');
   const coalitionParties = order.filter(p => p.coalition);
-  const coalitionSeats = coalitionParties.reduce((s, p) => s + p.seats, 0);
 
   let sl;
   if (d.chartType === 'westminster') {
-    sl = computeWestminsterLayout(n, coalitionSeats);
+    const seatParties = getSortedParties(false)
+      .filter(p => p.seats > 0)
+      .map(p => Object.assign({}, p, { pos: partyPos(p) }));
+    L.wmSeatParties = seatParties;
+    sl = computeWestminsterLayout(seatParties, {
+      wingRows: Number(d.wmWingRows) || 0,
+      centerCols: Number(d.wmCenterCols) || 0,
+      spacing: Number(d.wmSpacing) != null ? Number(d.wmSpacing) : 0.1,
+      cozy: !!d.wmCozy,
+      fullwidth: !!d.wmFullWidth
+    });
   } else {
     sl = computeSeatLayout(n, {
       arcDegrees: Number(d.arcDegrees) || 180,
@@ -2030,9 +2208,14 @@ function buildLayout() {
   L.isWestminster = !!sl.isWestminster;
   L.bbox = sl.bbox;
   L.seatR_base = scale;
-  L.seatR = (d.seatAutoSize !== false)
-    ? scale
-    : scale * (Number(d.seatSizeFactor) || 0.85);
+  if (sl.isWestminster) {
+    const base = (d.seatAutoSize !== false) ? 1 : (Number(d.seatSizeFactor) || 0.85);
+    L.seatR = base * scale * sl.cell * (1 - sl.spacing) / 2;
+  } else {
+    L.seatR = (d.seatAutoSize !== false)
+      ? scale
+      : scale * (Number(d.seatSizeFactor) || 0.85);
+  }
   L.seatShape = d.seatShape || 'circle';
 
   L.cx = W / 2 - (sl.bbox.minX + sl.bbox.maxX) / 2 * scale;
@@ -2074,32 +2257,12 @@ function buildLayout() {
   const seatVacant = [];
 
   if (d.chartType === 'westminster') {
-    const leftParties = order.filter(p => p.coalition);
-    const rightParties = order.filter(p => !p.coalition);
-    const lp = leftParties.length ? leftParties : order.slice(0, Math.max(1, Math.ceil(order.length/2)));
-    const rp = leftParties.length ? rightParties : order.slice(lp.length);
-
-    let leftRemain = sl.leftCount;
-    for (const p of lp) {
-      for (let k = 0; k < p.seats; k++) {
-        if (leftRemain <= 0) break;
-        seatColors.push(p.color);
-        seatCoalition.push(!!p.coalition);
-        seatVacant.push(p.status === 'vacant');
-        leftRemain--;
-      }
-      if (leftRemain <= 0) break;
-    }
-    let rightRemain = sl.rightCount;
-    for (const p of rp) {
-      for (let k = 0; k < p.seats; k++) {
-        if (rightRemain <= 0) break;
-        seatColors.push(p.color);
-        seatCoalition.push(!!p.coalition);
-        seatVacant.push(p.status === 'vacant');
-        rightRemain--;
-      }
-      if (rightRemain <= 0) break;
+    for (let i = 0; i < sl.seats.length; i++) {
+      const p = L.wmSeatParties[sl.partyIdx[i]];
+      if (!p) continue;
+      seatColors.push(p.color);
+      seatCoalition.push(!!p.coalition);
+      seatVacant.push(p.status === 'vacant');
     }
   } else {
     order.forEach(p => {
@@ -3081,6 +3244,8 @@ function renderPartyList() {
 
     const deltaVal = (Number(p.delta) === 0 || p.delta == null) ? '' : p.delta;
     const status = p.status || 'normal';
+    const wmPos = partyPos(p);
+    const isWestminster = (state.design.chartType === 'westminster');
 
     el.innerHTML = `
       <div class="pr-top">
@@ -3094,7 +3259,7 @@ function renderPartyList() {
         <input type="range" class="pct-range" min="0" max="100" step="0.1" value="${p.pct}">
         <input type="number" class="pct-num" min="0" max="100" step="0.1" value="${p.pct.toFixed(1)}">
         <span class="pct-sign">%</span>
-        <span class="seats-badge">${p.seats}</span>
+        <input type="number" class="seats-inp" min="0" step="1" value="${p.seats}" title="${uiT('party.seatsTitle')}">
       </div>
       <div class="pr-status">
         <input type="number" class="delta-inp" step="1" value="${deltaVal}" placeholder="${uiT('party.deltaPh')}" title="${uiT('party.deltaTitle')}">
@@ -3103,7 +3268,17 @@ function renderPartyList() {
           <button type="button" data-v="vacant" class="${status==='vacant'?'active':''}" title="${uiT('party.statusVacant')}">○</button>
           <button type="button" data-v="independent" class="${status==='independent'?'active':''}" title="${uiT('party.statusIndependent')}">⊘</button>
         </div>
-      </div>`;
+      </div>
+      ${isWestminster ? `
+      <div class="pr-pos">
+        <span class="pos-label">${uiT('party.posLabel')}</span>
+        <div class="seg compact wm-pos">
+          <button type="button" data-v="left" class="${wmPos==='left'?'active':''}" title="${uiT('party.posGov')}">${uiT('party.posGovShort')}</button>
+          <button type="button" data-v="right" class="${wmPos==='right'?'active':''}" title="${uiT('party.posOpp')}">${uiT('party.posOppShort')}</button>
+          <button type="button" data-v="center" class="${wmPos==='center'?'active':''}" title="${uiT('party.posCross')}">${uiT('party.posCrossShort')}</button>
+          <button type="button" data-v="head" class="${wmPos==='head'?'active':''}" title="${uiT('party.posSpeaker')}">${uiT('party.posSpeakerShort')}</button>
+        </div>
+      </div>` : ''}`;
     wrap.appendChild(el);
 
     const refs = {
@@ -3115,9 +3290,10 @@ function renderPartyList() {
       del: el.querySelector('.del'),
       range: el.querySelector('.pct-range'),
       num: el.querySelector('.pct-num'),
-      seats: el.querySelector('.seats-badge'),
+      seats: el.querySelector('.seats-inp'),
       delta: el.querySelector('.delta-inp'),
-      statusBtns: Array.from(el.querySelectorAll('.seg.compact button'))
+      statusBtns: Array.from(el.querySelectorAll('.pr-status .seg.compact button')),
+      posBtns: Array.from(el.querySelectorAll('.wm-pos button'))
     };
     paintSwatch(refs.swatch, p.color);
     refs.range.style.accentColor = p.color;
@@ -3170,6 +3346,23 @@ function renderPartyList() {
       e.target.value = p.pct.toFixed(1);
     });
 
+    refs.seats.addEventListener('input', e => {
+      const raw = parseInt(e.target.value, 10);
+      if (isNaN(raw)) return;
+      const others = state.parties.reduce((s, q) => s + (q.id === p.id ? 0 : q.seats), 0);
+      const v = clamp(raw, 0, Math.max(0, 2000 - others));
+      p.seats = v;
+      const total = others + v;
+      state.totalSeats = Math.max(1, total);
+      if (total > 0) state.parties.forEach(q => { q.pct = q.seats / total * 100; });
+      $('#totalSeats').value = state.totalSeats;
+      syncPartyUI(p.id);
+      render();
+    });
+    refs.seats.addEventListener('blur', e => {
+      e.target.value = p.seats;
+    });
+
     refs.delta.addEventListener('input', e => {
       const raw = String(e.target.value).trim();
       if (raw === '' || raw === '-') {
@@ -3192,6 +3385,14 @@ function renderPartyList() {
         render();
       });
     });
+
+    refs.posBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        p.pos = btn.dataset.v;
+        refs.posBtns.forEach(b => b.classList.toggle('active', b === btn));
+        render();
+      });
+    });
   });
 
   $('#partyCount').textContent = state.parties.length;
@@ -3208,7 +3409,7 @@ function syncPartyUI(skipId) {
       if (document.activeElement !== r.num) r.num.value = p.pct.toFixed(1);
       r.range.value = p.pct;
     }
-    r.seats.textContent = p.seats;
+    if (document.activeElement !== r.seats) r.seats.value = p.seats;
     r.coal.classList.toggle('on', p.coalition);
     r.lock.classList.toggle('on', p.locked);
     r.root.classList.toggle('is-coal', p.coalition);
@@ -3415,6 +3616,23 @@ function syncChartTypeUI() {
   });
   const arcWrap = $('#arcDegreesWrap');
   if (arcWrap) arcWrap.style.display = (d.chartType === 'westminster') ? 'none' : '';
+  const irf = $('#innerRadiusField');
+  if (irf) irf.style.display = (d.chartType === 'westminster') ? 'none' : '';
+  const wmWrap = $('#westminsterWrap');
+  if (wmWrap) wmWrap.style.display = (d.chartType === 'westminster') ? '' : 'none';
+  const wwr = $('#wmWingRows');
+  if (wwr && document.activeElement !== wwr) wwr.value = Math.round(Number(d.wmWingRows) || 0);
+  const wcc = $('#wmCenterCols');
+  if (wcc && document.activeElement !== wcc) wcc.value = Math.round(Number(d.wmCenterCols) || 0);
+  const wms = $('#wmSpacing');
+  const wmSpacingVal = Number(d.wmSpacing) != null ? clamp(Number(d.wmSpacing), 0, 0.6) : 0.1;
+  if (wms && document.activeElement !== wms) wms.value = wmSpacingVal;
+  const wmsl = $('#wmSpacingLabel');
+  if (wmsl) wmsl.textContent = '(' + Math.round(wmSpacingVal * 100) + '%)';
+  const wmc = $('#wmCozy');
+  if (wmc) wmc.checked = !!d.wmCozy;
+  const wmf = $('#wmFullWidth');
+  if (wmf) wmf.checked = !!d.wmFullWidth;
   $$('#arcDegreesBtns button').forEach(b => {
     b.classList.toggle('active', String(b.dataset.v) === String(d.arcDegrees || 180));
   });
@@ -3551,16 +3769,17 @@ function loadState(data) {
   state.logoW = data.logoW || 0;
   state.logoH = data.logoH || 0;
   state.design = Object.assign({}, DEFAULT_DESIGN, data.design || {});
-  state.parties = (data.parties || []).map(p => ({
+  state.parties = (data.parties || []).map((p, i) => ({
     id: p.id || uid(),
     name: p.name || '',
-    color: p.color || '#888888',
+    color: (typeof p.color === 'string' && p.color.trim()) ? p.color : PALETTE[i % PALETTE.length],
     pct: Number(p.pct) || 0,
     locked: !!p.locked,
     coalition: !!p.coalition,
     seats: 0,
     delta: Number(p.delta) || 0,
-    status: ['normal','vacant','independent'].includes(p.status) ? p.status : 'normal'
+    status: ['normal','vacant','independent'].includes(p.status) ? p.status : 'normal',
+    pos: ['left','right','center','head'].includes(p.pos) ? p.pos : undefined
   }));
   if (!state.parties.length) state.parties = makeDefaultParties();
 
@@ -3820,6 +4039,7 @@ function init() {
     b.addEventListener('click', () => {
       state.design.chartType = b.dataset.v;
       syncChartTypeUI();
+      renderPartyList();
       render();
     });
   });
@@ -3855,6 +4075,33 @@ function init() {
       syncChartTypeUI();
       render();
     });
+  });
+
+  /* ---- westminster settings ---- */
+  $('#wmWingRows').addEventListener('change', e => {
+    state.design.wmWingRows = Math.max(0, Math.round(Number(e.target.value)) || 0);
+    syncChartTypeUI();
+    render();
+  });
+  $('#wmCenterCols').addEventListener('change', e => {
+    state.design.wmCenterCols = Math.max(0, Math.round(Number(e.target.value)) || 0);
+    syncChartTypeUI();
+    render();
+  });
+  $('#wmSpacing').addEventListener('input', e => {
+    state.design.wmSpacing = clamp(parseFloat(e.target.value) || 0, 0, 0.6);
+    syncChartTypeUI();
+    render();
+  });
+  $('#wmCozy').addEventListener('change', e => {
+    state.design.wmCozy = e.target.checked;
+    syncChartTypeUI();
+    render();
+  });
+  $('#wmFullWidth').addEventListener('change', e => {
+    state.design.wmFullWidth = e.target.checked;
+    syncChartTypeUI();
+    render();
   });
 
   /* ---- title ---- */
@@ -4086,8 +4333,13 @@ function init() {
   $('#btnSvg').addEventListener('click', exportSVG);
 
   $('#btnSaveJson').addEventListener('click', () => {
-    const data = JSON.stringify(state, null, 2);
-    downloadBlob(new Blob([data], { type: 'application/json' }), safeName() + '.json');
+    const payload = Object.assign({ savedAt: new Date().toISOString() }, JSON.parse(JSON.stringify(state)));
+    const data = JSON.stringify(payload, null, 2);
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const stamp = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+      '_' + pad(d.getHours()) + '-' + pad(d.getMinutes());
+    downloadBlob(new Blob([data], { type: 'application/json' }), safeName() + ' ' + stamp + '.json');
     toast(uiT('toast.json'));
   });
   $('#btnLoadJson').addEventListener('click', () => $('#fileJson').click());
@@ -4099,7 +4351,13 @@ function init() {
       try {
         const data = JSON.parse(r.result);
         loadState(data);
-        toast(uiT('toast.fileLoaded'));
+        let msg = uiT('toast.fileLoaded');
+        if (data && data.savedAt) {
+          const lang = getLang();
+          const loc = lang === 'fr' ? 'fr-FR' : lang === 'en' ? 'en-GB' : 'ru-RU';
+          msg += ' (' + new Date(data.savedAt).toLocaleString(loc) + ')';
+        }
+        toast(msg);
       } catch (err) {
         toast(uiT('toast.badJson'));
       }
